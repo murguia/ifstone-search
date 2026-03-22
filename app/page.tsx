@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatInterface } from "@/components/ChatInterface";
+import AboutSection from "@/components/AboutSection";
 
 export default function Home() {
   return (
@@ -18,9 +19,12 @@ export default function Home() {
               <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-400">
                 Explore 18 years of investigative journalism (1953-1971)
               </p>
-              <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                <p><strong>Currently searchable:</strong> 1953 (47 issues, ~200 articles)</p>
-                <p><strong>Full archive:</strong> 1953–1971 (770 issues) — more years coming soon</p>
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  <p><strong>Currently searchable:</strong> 1953 (47 issues, ~200 articles)</p>
+                  <p><strong>Full archive:</strong> 1953–1971 (770 issues) — more years coming soon</p>
+                </div>
+                <AboutSection />
               </div>
             </header>
 
