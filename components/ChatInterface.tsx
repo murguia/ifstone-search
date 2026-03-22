@@ -24,6 +24,7 @@ export function ChatInterface() {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -37,7 +38,7 @@ export function ChatInterface() {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && document.activeElement === inputRef.current) {
         e.preventDefault();
         if (input.trim() && !isLoading) {
-          handleSubmit(e as any);
+          formRef.current?.requestSubmit();
         }
       }
       // Escape: Clear input
@@ -380,7 +381,7 @@ export function ChatInterface() {
       )}
 
       {/* Input Form */}
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form ref={formRef} onSubmit={handleSubmit} className="flex gap-2">
         <input
           ref={inputRef}
           type="text"
