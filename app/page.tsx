@@ -30,10 +30,14 @@ export default function Home() {
 
             <ChatInterface />
 
-            <footer className="mt-12 text-center text-sm text-gray-600 dark:text-gray-400">
+            <footer className="mt-12 text-center text-xs text-gray-500 dark:text-gray-400 space-y-2">
               <p>
-                Powered by OpenAI embeddings and semantic search. Ask questions
-                about I.F. Stone&apos;s reporting on civil rights, war, politics, and more.
+                Archive courtesy of{' '}
+                <a href="https://www.ifstone.org" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 hover:underline">ifstone.org</a>.
+                Use of these Weeklys for non-commercial purposes is authorized by the I.F. Stone family.
+              </p>
+              <p>
+                The I.F. Stone heirs thank Ron Unz for scanning the newsletters and sharing the material.
               </p>
             </footer>
           </div>
