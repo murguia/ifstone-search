@@ -143,9 +143,9 @@ export function ChatInterface() {
               Ask about I.F. Stone&apos;s Weekly
             </h2>
             <p className="text-gray-500 dark:text-gray-400 mb-3 md:mb-8 max-w-lg mx-auto text-sm md:text-base">
-              Explore one of the most influential independent newsletters in
-              American journalism. Ask about Stone&apos;s reporting on politics,
-              war, and civil liberties.
+              Semantic search across I.F. Stone&apos;s Weekly, one of the most
+              influential independent newsletters in American journalism.
+              Currently searching 1953 — full archive through 1971 coming soon.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
               {sampleQuestions.map((question, i) => (
