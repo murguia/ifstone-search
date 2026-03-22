@@ -226,9 +226,9 @@ export function ChatInterface({ initialMessages, onHistoryUpdate }: ChatInterfac
               <p className="mb-3">Example questions:</p>
               <div className="space-y-2 max-w-2xl mx-auto">
                 {[
-                  "What did I.F. Stone write about McCarthyism?",
-                  "Tell me about the coverage of the Vietnam War",
-                  "What articles discuss civil rights?",
+                  "What did I.F. Stone write about McCarthy?",
+                  "What was Stone's view on the Korean War armistice?",
+                  "What did Stone write about atomic weapons?",
                 ].map((question, idx) => (
                   <button
                     key={idx}
