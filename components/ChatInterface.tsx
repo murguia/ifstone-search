@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, FormEvent, useEffect, useRef } from "react";
-import { saveToHistory, HistoryEntry } from "@/lib/history";
 
 export interface Message {
   role: "user" | "assistant";
@@ -19,24 +18,12 @@ export interface Message {
   }>;
 }
 
-interface ChatInterfaceProps {
-  initialMessages?: Message[];
-  onHistoryUpdate?: () => void;
-}
-
-export function ChatInterface({ initialMessages, onHistoryUpdate }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>(initialMessages || []);
+export function ChatInterface() {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Update messages when initialMessages changes
-  useEffect(() => {
-    if (initialMessages) {
-      setMessages(initialMessages);
-    }
-  }, [initialMessages]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -72,19 +59,26 @@ export function ChatInterface({ initialMessages, onHistoryUpdate }: ChatInterfac
   };
 
   const handleCopy = async (content: string, index: number, question?: string) => {
-    try {
-      // Include question for context if available
-      let textToCopy = content;
-      if (question) {
-        textToCopy = `Q: ${question}\n\nA: ${content}`;
-      }
-
-      await navigator.clipboard.writeText(textToCopy);
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
+    let textToCopy = content;
+    if (question) {
+      textToCopy = `Q: ${question}\n\nA: ${content}`;
     }
+
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+    } catch {
+      // Fallback for non-HTTPS contexts (e.g., local IP)
+      const textarea = document.createElement('textarea');
+      textarea.value = textToCopy;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 2000);
   };
 
   async function handleSubmit(e: FormEvent) {
@@ -186,16 +180,6 @@ export function ChatInterface({ initialMessages, onHistoryUpdate }: ChatInterfac
             console.error("Error parsing chunk:", parseError);
           }
         }
-      }
-
-      // Save to history after streaming completes
-      if (content && sources) {
-        saveToHistory({
-          question,
-          answer: content,
-          sources,
-        });
-        onHistoryUpdate?.();
       }
 
       setIsLoading(false);
