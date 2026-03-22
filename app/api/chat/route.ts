@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     // Search for similar chunks in Pinecone
     console.log('Searching for similar content...');
-    const matches = await searchSimilarChunks(questionEmbedding, 10);
+    const matches = await searchSimilarChunks(questionEmbedding, question, 10);
 
     if (matches.length === 0) {
       const encoder = new TextEncoder();
@@ -45,19 +45,29 @@ export async function POST(request: NextRequest) {
     const context = matches
       .map((match, idx) => {
         const metadata = match.metadata as Record<string, any>;
-        return `[Source ${idx + 1}] ${metadata.text}`;
+        const text = metadata.full_text || metadata.text;
+        const header = [
+          metadata.title,
+          metadata.date,
+          metadata.author,
+        ].filter(Boolean).join(' | ');
+        return `[Source ${idx + 1}] ${header}\n${text}`;
       })
       .join('\n\n');
 
     const sources = matches.map((match) => {
       const metadata = match.metadata as Record<string, any>;
-      const filename = metadata.filename;
-      const pdfUrl = `https://www.ifstone.org/weekly/${filename}`;
+      const fileId = metadata.file_id || metadata.filename;
+      const pdfUrl = `https://www.ifstone.org/weekly/${fileId}`;
 
       return {
-        text: metadata.text,
+        title: metadata.title || metadata.article_title || fileId,
+        text: metadata.full_text || metadata.text,
+        date: metadata.date,
         year: metadata.year,
-        filename: filename,
+        author: metadata.author,
+        type: metadata.type,
+        filename: fileId,
         pdfUrl: pdfUrl,
         score: match.score,
       };

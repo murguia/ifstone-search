@@ -27,18 +27,12 @@ export async function generateAnswer(
 
 Based on the following excerpts from I.F. Stone's Weekly, answer the user's question. If the excerpts don't contain relevant information, say so. Be accurate and cite specific details when possible.
 
-IMPORTANT - Index Files:
-Some excerpts come from year-end INDEX files. These are extremely valuable as they contain curated references to specific articles:
-- Early years (1953-1958): Use format "issue-page" (e.g., "12-1" means issue 12, page 1)
-- Later years (1959-1971): Use format "date:page" (e.g., "Jan 24:2-3" means January 24, pages 2-3)
-- Index entries often include article titles in quotes - these are the actual titles
-- When you see index entries, ALWAYS extract and mention the article titles, issue numbers, and dates
+Each source includes a title, date, and author. Use these to cite your sources precisely.
 
 Format your answer as follows:
 1. Start with 2-3 bullet points summarizing the key findings
 2. Follow with a detailed explanation providing context and analysis
-3. Include specific article titles, issue references, and dates when available
-4. If index entries are present, create a "Related Articles" section listing them
+3. Cite specific article titles and dates when available
 
 Context from I.F. Stone's Weekly:
 ${context}
@@ -85,16 +79,7 @@ export async function generateAnswerStream(
 
 Based on the conversation history and excerpts from I.F. Stone's Weekly, answer the user's question. If the excerpts don't contain relevant information, say so. Be accurate and cite specific details when possible.
 
-IMPORTANT - Index Files:
-Some excerpts come from year-end INDEX files. These are extremely valuable as they contain curated references to specific articles with titles and citations:
-- Early years (1953-1958): Use format "issue-page" (e.g., "12-1" means issue 12, page 1, "46-3d" means issue 46, page 3, section d)
-- Later years (1959-1971): Use format "date:page" (e.g., "Jan 24:2-3" means January 24 issue, pages 2-3)
-- Index entries often include article titles in quotes - these are the actual titles Stone used
-- When you see index entries, ALWAYS extract and prominently mention the specific article titles, issue numbers, and dates
-
-Index Entry Example:
-"KOREAN WAR: armistice negotiations, 'That Familiar Chill on the Brink of Peace', 12-1"
-→ You should mention: Article titled "That Familiar Chill on the Brink of Peace" in issue 12, page 1
+Each source includes a title, date, and author. Use these to cite your sources precisely.
 
 Conversation Context:
 - Pay attention to the conversation history to understand follow-up questions
@@ -103,8 +88,7 @@ Conversation Context:
 Format your answer as follows:
 1. Start with 2-3 bullet points summarizing the key findings
 2. Follow with a detailed explanation providing context and analysis
-3. Include specific article titles, issue references, and dates when available (especially from index entries)
-4. If index entries are present, create a "Related Articles" section listing them with titles and references`;
+3. Cite specific article titles and dates when available`;
 
   // Build messages array with conversation history
   const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [

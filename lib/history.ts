@@ -3,8 +3,12 @@ export interface HistoryEntry {
   question: string;
   answer: string;
   sources: Array<{
+    title: string;
     text: string;
+    date?: string;
     year: string;
+    author?: string;
+    type?: string;
     filename: string;
     pdfUrl?: string;
     score?: number;

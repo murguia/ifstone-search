@@ -8,8 +8,12 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   sources?: Array<{
+    title: string;
     text: string;
+    date?: string;
     year: string;
+    author?: string;
+    type?: string;
     filename: string;
     pdfUrl?: string;
     score?: number;
@@ -308,15 +312,18 @@ export function ChatInterface({ initialMessages, onHistoryUpdate }: ChatInterfac
                       key={idx}
                       className="text-sm bg-white dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600"
                     >
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center justify-between mb-1">
                         <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {source.filename} ({source.year})
+                          {source.title}
                         </div>
                         {source.score && (
                           <span className="text-xs px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 font-semibold">
                             {(source.score * 100).toFixed(0)}% match
                           </span>
                         )}
+                      </div>
+                      <div className="text-gray-500 dark:text-gray-400 text-xs mb-2">
+                        {[source.date, source.author, source.type].filter(Boolean).join(' · ')}
                       </div>
                       <div className="text-gray-700 dark:text-gray-300 text-xs mb-2">
                         {source.text.substring(0, 200)}...
