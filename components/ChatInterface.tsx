@@ -22,65 +22,15 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Keyboard shortcuts
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K: Focus search input
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-      // Cmd/Ctrl + Enter: Submit form
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && document.activeElement === inputRef.current) {
-        e.preventDefault();
-        if (input.trim() && !isLoading) {
-          formRef.current?.requestSubmit();
-        }
-      }
-      // Escape: Clear input
-      if (e.key === 'Escape' && document.activeElement === inputRef.current) {
-        setInput('');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [input, isLoading]);
-
-  const handleExampleClick = (question: string) => {
-    setInput(question);
-    // Focus the input field after a short delay to ensure state update
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
-  };
-
-  const handleCopy = async (content: string, index: number, question?: string) => {
-    let textToCopy = content;
-    if (question) {
-      textToCopy = `Q: ${question}\n\nA: ${content}`;
-    }
-
-    try {
-      await navigator.clipboard.writeText(textToCopy);
-    } catch {
-      // Fallback for non-HTTPS contexts (e.g., local IP)
-      const textarea = document.createElement('textarea');
-      textarea.value = textToCopy;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-    }
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
+    scrollToBottom();
+  }, [messages, isLoading]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -98,7 +48,6 @@ export function ChatInterface() {
     setIsLoading(true);
 
     try {
-      // Prepare conversation history (exclude sources, just role and content)
       const conversationHistory = messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
@@ -106,41 +55,24 @@ export function ChatInterface() {
 
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question,
-          conversationHistory,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, conversationHistory }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response");
-      }
+      if (!response.ok) throw new Error("Failed to get response");
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
-      if (!reader) {
-        throw new Error("No response body");
-      }
+      if (!reader) throw new Error("No response body");
 
       let sources: Message["sources"] = [];
       let content = "";
       let assistantMessageIndex = -1;
 
-      // Add empty assistant message that we'll update
       setMessages((prev) => {
         assistantMessageIndex = prev.length;
-        return [
-          ...prev,
-          {
-            role: "assistant",
-            content: "",
-            sources: [],
-          },
-        ];
+        return [...prev, { role: "assistant", content: "", sources: [] }];
       });
 
       while (true) {
@@ -186,240 +118,175 @@ export function ChatInterface() {
       setIsLoading(false);
     } catch (error) {
       console.error("Error:", error);
-      const errorMessage: Message = {
-        role: "assistant",
-        content:
-          "Sorry, I encountered an error while processing your question. Please try again.",
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Sorry, I encountered an error. Please try again.",
+        },
+      ]);
       setIsLoading(false);
     }
   }
 
+  const sampleQuestions = [
+    "What did I.F. Stone write about McCarthy?",
+    "What was Stone's view on the Korean War armistice?",
+  ];
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6">
-      {/* Messages */}
-      <div className="mb-4 sm:mb-6 space-y-4 min-h-[300px] sm:min-h-[400px] max-h-[500px] sm:max-h-[600px] overflow-y-auto">
-        {messages.length === 0 && (
-          <div className="text-center text-gray-500 dark:text-gray-400 py-12">
-            <p className="text-lg mb-4">
-              Ask a question about I.F. Stone&apos;s Weekly
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-12rem)] max-w-4xl mx-auto">
+      <div className="flex-1 overflow-y-auto px-4 py-2 md:py-6">
+        {messages.length === 0 ? (
+          <div className="text-center flex flex-col items-center justify-center h-full">
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-1 md:mb-4">
+              Ask about I.F. Stone&apos;s Weekly
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-3 md:mb-8 max-w-lg mx-auto text-sm md:text-base">
+              Explore one of the most influential independent newsletters in
+              American journalism. Ask about Stone&apos;s reporting on politics,
+              war, and civil liberties.
             </p>
-            <div className="text-sm space-y-2">
-              <p className="mb-3">Example questions:</p>
-              <div className="space-y-2 max-w-2xl mx-auto">
-                {[
-                  "What did I.F. Stone write about McCarthy?",
-                  "What was Stone's view on the Korean War armistice?",
-                  "What did Stone write about atomic weapons?",
-                ].map((question, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleExampleClick(question)}
-                    className="w-full px-3 py-3 sm:px-4 sm:py-3 text-left text-sm sm:text-base bg-white dark:bg-gray-700 hover:bg-amber-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded-lg transition-colors text-gray-700 dark:text-gray-200 hover:border-amber-300 dark:hover:border-amber-600 active:bg-amber-100 dark:active:bg-gray-500"
-                  >
-                    {question}
-                  </button>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
+              {sampleQuestions.map((question, i) => (
+                <button
+                  key={i}
+                  onClick={() => setInput(question)}
+                  className="text-left px-4 py-3 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 text-sm transition-colors border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600"
+                >
+                  {question}
+                </button>
+              ))}
             </div>
           </div>
-        )}
-
-        {messages.map((message, index) => {
-          // Find the previous user message for context when copying
-          const previousUserMessage = index > 0 && messages[index - 1].role === "user"
-            ? messages[index - 1].content
-            : undefined;
-
-          return (
-            <div
-              key={index}
-              className={`${
-                message.role === "user"
-                  ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500"
-                  : "bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500"
-              } p-3 sm:p-4 rounded-r-lg relative group`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-semibold text-gray-900 dark:text-gray-100">
-                  {message.role === "user" ? "You" : "I.F. Stone Bot"}
-                </div>
-
-                {/* Copy button for assistant messages */}
-                {message.role === "assistant" && (
-                  <button
-                    onClick={() => handleCopy(message.content, index, previousUserMessage)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded hover:bg-amber-100 dark:hover:bg-amber-900/30 text-gray-600 dark:text-gray-400"
-                    title="Copy answer"
-                  >
-                    {copiedIndex === index ? (
-                      <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Copied!
-                      </span>
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                  </button>
-                )}
-              </div>
-              {message.content ? (
-                <div className="text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                  {message.content}
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                    <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+        ) : (
+          <>
+            {messages.map((message, index) => (
+              <div key={index} className="mb-6">
+                {message.role === "user" ? (
+                  <div className="flex justify-end mb-4">
+                    <div className="bg-amber-500 text-white px-4 py-3 rounded-2xl rounded-br-md max-w-[80%]">
+                      {message.content}
+                    </div>
                   </div>
-                  <span>Searching archives...</span>
-                </div>
-              )}
-
-            {/* Sources */}
-            {message.sources && message.sources.length > 0 && (
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
-                  View Sources ({message.sources.length})
-                </summary>
-                <div className="mt-2 space-y-2">
-                  {message.sources.map((source, idx) => (
-                    <div
-                      key={idx}
-                      className="text-sm bg-white dark:bg-gray-700 p-3 rounded border border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {source.title}
+                ) : (
+                  <div>
+                    <div className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-5 py-4 rounded-2xl rounded-bl-md max-w-[90%] shadow-sm">
+                      {message.content ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          {message.content.split("\n").map((line, i) => (
+                            <p key={i} className={line === "" ? "h-4" : "mb-2"}>
+                              {line}
+                            </p>
+                          ))}
                         </div>
-                        {source.score && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 font-semibold">
-                            {(source.score * 100).toFixed(0)}% match
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-gray-500 dark:text-gray-400 text-xs mb-2">
-                        {[source.date, source.author, source.type].filter(Boolean).join(' · ')}
-                      </div>
-                      <div className="text-gray-700 dark:text-gray-300 text-xs mb-2">
-                        {source.text.substring(0, 200)}...
-                      </div>
-                      {source.pdfUrl && (
-                        <a
-                          href={source.pdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded transition-colors"
-                        >
-                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          View PDF
-                        </a>
+                      ) : (
+                        <div className="flex items-center gap-2 text-gray-400">
+                          <div className="flex gap-1">
+                            <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" />
+                            <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                            <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                          </div>
+                          <span className="text-sm">Searching archives...</span>
+                        </div>
                       )}
                     </div>
-                  ))}
-                </div>
-              </details>
-            )}
-            </div>
-          );
-        })}
 
-        {isLoading && messages.length > 0 && messages[messages.length - 1].role !== "assistant" && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded-r-lg">
-            <div className="font-semibold mb-2 text-gray-900 dark:text-gray-100">
-              I.F. Stone Bot
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></div>
-                <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                    {message.sources && message.sources.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
+                          Sources ({message.sources.length})
+                        </p>
+                        <div className="space-y-2">
+                          {message.sources.map((source, idx) => (
+                            <details
+                              key={idx}
+                              className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white/50 dark:bg-gray-800/50"
+                            >
+                              <summary className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-amber-50/50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
+                                <div className="flex items-center gap-3">
+                                  <span className="bg-amber-500 text-white text-xs font-medium px-2 py-1 rounded">
+                                    [{idx + 1}]
+                                  </span>
+                                  <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
+                                    {source.title}
+                                  </span>
+                                </div>
+                                {source.score && (
+                                  <span className="text-amber-600 dark:text-amber-400 text-sm">
+                                    {(source.score * 100).toFixed(0)}% match
+                                  </span>
+                                )}
+                              </summary>
+                              <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
+                                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                  {[source.date, source.author, source.type].filter(Boolean).join(" · ")}
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-900/50 rounded p-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                  {source.text.substring(0, 300)}...
+                                </div>
+                                {source.pdfUrl && (
+                                  <div className="mt-2">
+                                    <a
+                                      href={source.pdfUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                      </svg>
+                                      View original PDF
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </details>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <span>Searching archives...</span>
-            </div>
-          </div>
+            ))}
+            {isLoading && messages.length > 0 && messages[messages.length - 1].role !== "assistant" && (
+              <div className="flex items-center gap-2 text-gray-400 mb-4">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" />
+                  <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                  <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                </div>
+                <span className="text-sm">Searching archives...</span>
+              </div>
+            )}
+          </>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Context Indicator & Clear Button */}
-      {messages.length > 0 && (
-        <div className="mb-2 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1 sm:gap-2 text-gray-500 dark:text-gray-400">
-            <svg
-              className="w-4 h-4 flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-              />
-            </svg>
-            <span className="truncate">
-              Conversation active ({Math.floor(messages.length / 2)})
-            </span>
-          </div>
+      <form
+        onSubmit={handleSubmit}
+        className="border-t border-amber-200 dark:border-gray-700 p-4 bg-white/50 dark:bg-gray-900/50"
+      >
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask about I.F. Stone's Weekly..."
+            className="flex-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            disabled={isLoading}
+          />
           <button
-            onClick={() => setMessages([])}
-            className="text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors whitespace-nowrap ml-2 px-2 py-1 sm:px-0 sm:py-0"
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            className="bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-medium transition-colors"
           >
-            Clear
+            Ask
           </button>
         </div>
-      )}
-
-      {/* Input Form */}
-      <form ref={formRef} onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={
-            messages.length > 0
-              ? "Ask a follow-up..."
-              : "Ask a question..."
-          }
-          className="flex-1 px-3 py-3 sm:px-4 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 dark:bg-gray-700 dark:text-white"
-          disabled={isLoading}
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !input.trim()}
-          className="px-4 py-3 sm:px-6 sm:py-3 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
-        >
-          {isLoading ? "..." : "Ask"}
-        </button>
       </form>
-
-      {/* Keyboard shortcuts hint */}
-      <div className="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
-        <span className="hidden sm:inline">
-          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">⌘/Ctrl</kbd>
-          {" + "}
-          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">K</kbd>
-          {" to focus • "}
-          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">⌘/Ctrl</kbd>
-          {" + "}
-          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">Enter</kbd>
-          {" to submit • "}
-          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600">Esc</kbd>
-          {" to clear"}
-        </span>
-      </div>
-
     </div>
   );
 }
