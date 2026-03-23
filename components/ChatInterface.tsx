@@ -283,26 +283,17 @@ export function ChatInterface() {
         onSubmit={handleSubmit}
         className="border-t border-amber-200 dark:border-gray-700 p-4 bg-white/50 dark:bg-gray-900/50"
       >
-        <div className="flex gap-2 mb-3">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
-          >
-            <option value="">All types</option>
-            <option value="article">Articles &amp; Notes</option>
-            <option value="quotation-transcription">Quotations &amp; Transcriptions</option>
-          </select>
-          {filterType && (
-            <button
-              type="button"
-              onClick={() => setFilterType("")}
-              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            >
-              Clear filter
-            </button>
-          )}
-        </div>
+        <label className="flex items-center gap-2 mb-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={filterType === "quotation-transcription"}
+            onChange={(e) => setFilterType(e.target.checked ? "quotation-transcription" : "")}
+            className="w-3.5 h-3.5 rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-500 cursor-pointer"
+          />
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            Quotations &amp; transcriptions only
+          </span>
+        </label>
         <div className="flex gap-3">
           <input
             type="text"
