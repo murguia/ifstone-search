@@ -76,8 +76,12 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                   3
                 </span>
                 <p>
-                  An AI model synthesizes an answer grounded in those articles,
-                  with citations you can verify against the original PDFs.
+                  The top 10 matching articles are listed as{' '}
+                  <span className="text-amber-600 dark:text-amber-400">Sources</span>,
+                  ranked by relevance score. All 10 are passed as context to an
+                  AI model, which synthesizes a narrative answer. The answer may
+                  emphasize only a few of the sources — the full list lets you
+                  explore what else the search found.
                 </p>
               </div>
             </div>
