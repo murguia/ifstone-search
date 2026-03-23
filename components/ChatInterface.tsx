@@ -22,6 +22,8 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [filterType, setFilterType] = useState("");
+  const [filterAuthor, setFilterAuthor] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +61,14 @@ export function ChatInterface() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, conversationHistory }),
+        body: JSON.stringify({
+          question,
+          conversationHistory,
+          filters: {
+            ...(filterType && { type: filterType }),
+            ...(filterAuthor && { author: filterAuthor }),
+          },
+        }),
       });
 
       if (!response.ok) throw new Error("Failed to get response");
@@ -276,6 +285,36 @@ export function ChatInterface() {
         onSubmit={handleSubmit}
         className="border-t border-amber-200 dark:border-gray-700 p-4 bg-white/50 dark:bg-gray-900/50"
       >
+        <div className="flex gap-2 mb-3">
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
+          >
+            <option value="">All types</option>
+            <option value="analysis">Analysis</option>
+            <option value="note">Note</option>
+            <option value="quotation-transcription">Quotation/Transcription</option>
+          </select>
+          <select
+            value={filterAuthor}
+            onChange={(e) => setFilterAuthor(e.target.value)}
+            className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
+          >
+            <option value="">All authors</option>
+            <option value="I.F. Stone">I.F. Stone</option>
+            <option value="Jennings Perry">Jennings Perry</option>
+          </select>
+          {(filterType || filterAuthor) && (
+            <button
+              type="button"
+              onClick={() => { setFilterType(""); setFilterAuthor(""); }}
+              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
         <div className="flex gap-3">
           <input
             type="text"

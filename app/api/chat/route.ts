@@ -9,7 +9,7 @@ interface Message {
 
 export async function POST(request: NextRequest) {
   try {
-    const { question, conversationHistory = [] } = await request.json();
+    const { question, conversationHistory = [], filters = {} } = await request.json();
 
     if (!question || typeof question !== 'string') {
       const encoder = new TextEncoder();
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     // Search for similar chunks in Pinecone
     console.log('Searching for similar content...');
-    const matches = await searchSimilarChunks(questionEmbedding, question, 10);
+    const matches = await searchSimilarChunks(questionEmbedding, question, 10, filters);
 
     if (matches.length === 0) {
       const encoder = new TextEncoder();

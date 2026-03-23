@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://ifstone-search.vercel.app"),
   icons: {
     icon: "/favicon.svg",
   },

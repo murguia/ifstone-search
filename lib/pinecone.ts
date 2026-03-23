@@ -19,20 +19,38 @@ export const PINECONE_INDEX_NAME = 'ifstone-weekly';
  * will prioritize articles he indexed under MCCARTHY over articles that
  * merely mention the name.
  */
+export interface SearchFilters {
+  type?: string;
+  author?: string;
+  year?: string;
+}
+
 export async function searchSimilarChunks(
   embedding: number[],
   query: string,
-  topK: number = 5
+  topK: number = 5,
+  filters: SearchFilters = {}
 ) {
   const index = pinecone.index(PINECONE_INDEX_NAME);
 
   const fetchK = Math.min(topK * 3, 30);
 
-  const results = await index.query({
+  // Build Pinecone metadata filter
+  const filterConditions: Record<string, any> = {};
+  if (filters.type) filterConditions.type = filters.type;
+  if (filters.author) filterConditions.author = filters.author;
+  if (filters.year) filterConditions.year = filters.year;
+
+  const queryParams: any = {
     vector: embedding,
     topK: fetchK,
     includeMetadata: true,
-  });
+  };
+  if (Object.keys(filterConditions).length > 0) {
+    queryParams.filter = filterConditions;
+  }
+
+  const results = await index.query(queryParams);
 
   const matches = results.matches || [];
 
