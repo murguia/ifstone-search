@@ -57,7 +57,8 @@ export default function Home() {
             The I.F. Stone heirs thank Ron Unz for scanning the newsletters and sharing the material.
           </p>
           <p className="pt-2">
-            Built by Raul Murguia{' '}
+            Built by{' '}
+            <a href="https://murguia.org" target="_blank" rel="noopener noreferrer" className="text-amber-600 dark:text-amber-400 hover:underline">Raul Murguia</a>{' '}
             <a
               href="https://github.com/murguia/ifstone-search"
               target="_blank"
