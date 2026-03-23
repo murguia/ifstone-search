@@ -146,8 +146,8 @@ export function ChatInterface() {
   }
 
   const sampleQuestions = [
-    "What did I.F. Stone write about McCarthy?",
-    "What was Stone's view on the Korean War armistice?",
+    { text: "What did I.F. Stone write about McCarthy?", author: "I.F. Stone" },
+    { text: "What was Stone's view on the Korean War armistice?", author: "" },
   ];
 
   return (
@@ -167,10 +167,13 @@ export function ChatInterface() {
               {sampleQuestions.map((question, i) => (
                 <button
                   key={i}
-                  onClick={() => setInput(question)}
+                  onClick={() => {
+                    setInput(question.text);
+                    if (question.author) setFilterAuthor(question.author);
+                  }}
                   className="text-left px-4 py-3 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 text-sm transition-colors border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600"
                 >
-                  {question}
+                  {question.text}
                 </button>
               ))}
             </div>

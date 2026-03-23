@@ -23,11 +23,9 @@ export async function POST(request: NextRequest) {
 
     // Generate embedding for the question (use broad query if filter-only)
     const queryText = question?.trim() || 'I.F. Stone Weekly 1953';
-    console.log('Creating embedding for question...');
     const questionEmbedding = await createEmbedding(queryText);
 
     // Search for similar chunks in Pinecone
-    console.log('Searching for similar content...');
     const matches = await searchSimilarChunks(questionEmbedding, queryText, 10, filters);
 
     if (matches.length === 0) {
@@ -85,7 +83,6 @@ export async function POST(request: NextRequest) {
 
         try {
           // Stream the answer
-          console.log('Generating answer...');
           const chatStream = await generateAnswerStream(
             question,
             context,
