@@ -10,7 +10,7 @@ This application uses:
 - **Pinecone** for vector similarity search
 - **RAG (Retrieval-Augmented Generation)** to provide accurate, source-backed answers
 
-Data ingestion (PDF conversion, review, and Pinecone upload) is handled by a separate project.
+Data ingestion is handled by a companion project: [pdf-newsletter-converter](https://github.com/murguia/pdf-newsletter-converter) (private). That repo contains the full pipeline — PDF download, vision-language model conversion, manual review UI, index parsing, and Pinecone upload.
 
 ## Features
 
