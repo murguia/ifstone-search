@@ -218,17 +218,22 @@ export function ChatInterface() {
                               className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white/50 dark:bg-gray-800/50"
                             >
                               <summary className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-amber-50/50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
-                                <div className="flex items-center gap-3">
-                                  <span className="bg-amber-500 text-white text-xs font-medium px-2 py-1 rounded">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <span className="bg-amber-500 text-white text-xs font-medium px-2 py-1 rounded shrink-0">
                                     [{idx + 1}]
                                   </span>
-                                  <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
-                                    {source.title}
-                                  </span>
+                                  <div className="min-w-0">
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium text-sm">
+                                      {source.title}
+                                    </span>
+                                    <div className="text-xs text-gray-400 dark:text-gray-500">
+                                      {[source.date, source.author, source.type].filter(Boolean).join(" · ")}
+                                    </div>
+                                  </div>
                                 </div>
                                 {source.score && (
-                                  <span className="text-amber-600 dark:text-amber-400 text-sm">
-                                    {(source.score * 100).toFixed(0)}% match
+                                  <span className="text-amber-600 dark:text-amber-400 text-xs shrink-0 ml-2">
+                                    {(source.score * 100).toFixed(0)}%
                                   </span>
                                 )}
                               </summary>
@@ -283,7 +288,8 @@ export function ChatInterface() {
         onSubmit={handleSubmit}
         className="border-t border-amber-200 dark:border-gray-700 p-4 bg-white/50 dark:bg-gray-900/50"
       >
-        <label className="flex items-center gap-2 mb-3 cursor-pointer">
+        <div className="flex items-center justify-between mb-3">
+        <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
             checked={filterType === "quotation-transcription"}
@@ -294,6 +300,16 @@ export function ChatInterface() {
             Quotations &amp; transcriptions only
           </span>
         </label>
+          {messages.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setMessages([])}
+              className="text-xs text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+            >
+              Clear chat
+            </button>
+          )}
+        </div>
         <div className="flex gap-3">
           <input
             type="text"
