@@ -89,11 +89,9 @@ ifstone-search/
 │   ├── layout.tsx
 │   └── page.tsx
 ├── components/
-│   ├── ChatInterface.tsx       # Main chat UI
-│   ├── HistorySidebar.tsx      # Search history panel
-│   └── TopicBrowser.tsx        # Topic browsing
+│   ├── AboutSection.tsx        # 'How it works' info dialog
+│   └── ChatInterface.tsx       # Main chat UI
 ├── lib/
-│   ├── history.ts              # localStorage history management
 │   ├── openai.ts               # OpenAI embeddings and streaming chat
 │   └── pinecone.ts             # Pinecone search with index-topic boosting
 └── package.json
@@ -114,8 +112,11 @@ Deployable to Vercel, Railway, Fly.io, or any Node.js platform. Set `OPENAI_API_
 
 ## Credits
 
-- Built for exploring I.F. Stone's Weekly archive (1953-1971)
-- Powered by OpenAI and Pinecone
+Archive courtesy of [ifstone.org](https://www.ifstone.org). Use of these Weeklys for non-commercial purposes is authorized by the I.F. Stone family.
+
+The I.F. Stone heirs thank Ron Unz for scanning the newsletters and sharing the material.
+
+Powered by OpenAI and Pinecone.
 
 ## License
 
