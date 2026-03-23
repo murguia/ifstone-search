@@ -22,14 +22,17 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Auto-scroll only if user is near the bottom
   useEffect(() => {
-    scrollToBottom();
+    const el = scrollRef.current;
+    if (!el) return;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 150;
+    if (isNearBottom) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages, isLoading]);
 
   async function handleSubmit(e: FormEvent) {
@@ -88,14 +91,6 @@ export function ChatInterface() {
 
             if (data.type === "sources") {
               sources = data.sources;
-              setMessages((prev) => {
-                const newMessages = [...prev];
-                newMessages[assistantMessageIndex] = {
-                  ...newMessages[assistantMessageIndex],
-                  sources,
-                };
-                return newMessages;
-              });
             } else if (data.type === "content") {
               content += data.content;
               setMessages((prev) => {
@@ -113,6 +108,18 @@ export function ChatInterface() {
             console.error("Error parsing chunk:", parseError);
           }
         }
+      }
+
+      // Attach sources only after streaming is complete
+      if (sources && sources.length > 0) {
+        setMessages((prev) => {
+          const newMessages = [...prev];
+          newMessages[assistantMessageIndex] = {
+            ...newMessages[assistantMessageIndex],
+            sources,
+          };
+          return newMessages;
+        });
       }
 
       setIsLoading(false);
@@ -136,7 +143,7 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-12rem)] max-w-4xl mx-auto">
-      <div className="flex-1 overflow-y-auto px-4 py-2 md:py-6">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-2 md:py-6">
         {messages.length === 0 ? (
           <div className="text-center flex flex-col items-center justify-center h-full">
             <h2 className="text-xl md:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-1 md:mb-4">
