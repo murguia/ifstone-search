@@ -23,6 +23,7 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [filterType, setFilterType] = useState("");
+  const [filterAuthor, setFilterAuthor] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +40,7 @@ export function ChatInterface() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if ((!input.trim() && !filterType) || isLoading) return;
+    if ((!input.trim() && !filterType && !filterAuthor) || isLoading) return;
 
     const userMessage: Message = {
       role: "user",
@@ -65,6 +66,7 @@ export function ChatInterface() {
           conversationHistory,
           filters: {
             ...(filterType && { type: filterType }),
+            ...(filterAuthor && { author: filterAuthor }),
           },
         }),
       });
@@ -293,13 +295,23 @@ export function ChatInterface() {
           <input
             type="checkbox"
             checked={filterType === "quotation-transcription"}
-            onChange={(e) => setFilterType(e.target.checked ? "quotation-transcription" : "")}
+            onChange={(e) => { setFilterType(e.target.checked ? "quotation-transcription" : ""); if (e.target.checked) setFilterAuthor(""); }}
             className="w-3.5 h-3.5 rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-500 cursor-pointer"
           />
           <span className="text-xs text-gray-500 dark:text-gray-400">
             Quotations &amp; transcriptions only
           </span>
         </label>
+          <select
+            value={filterAuthor}
+            onChange={(e) => setFilterAuthor(e.target.value)}
+            disabled={filterType === "quotation-transcription"}
+            className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <option value="">All authors</option>
+            <option value="I.F. Stone">I.F. Stone</option>
+            <option value="Jennings Perry">Jennings Perry</option>
+          </select>
           {messages.length > 0 && (
             <button
               type="button"
@@ -321,7 +333,7 @@ export function ChatInterface() {
           />
           <button
             type="submit"
-            disabled={isLoading || (!input.trim() && !filterType)}
+            disabled={isLoading || (!input.trim() && !filterType && !filterAuthor)}
             className="bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-medium transition-colors"
           >
             Ask
