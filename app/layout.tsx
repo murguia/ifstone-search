@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  icons: {
+    icon: "/favicon.svg",
+  },
   title: "I.F. Stone's Weekly Search",
   description: "AI-powered semantic search across I.F. Stone's Weekly, one of the most influential independent newsletters in American journalism (1953-1971).",
   openGraph: {
