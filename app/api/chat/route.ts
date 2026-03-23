@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     const { question, conversationHistory = [], filters = {} } = await request.json();
 
-    if (!question || typeof question !== 'string') {
+    if ((!question || typeof question !== 'string') && !filters.type) {
       const encoder = new TextEncoder();
       return new Response(
         encoder.encode(
@@ -21,13 +21,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate embedding for the question
+    // Generate embedding for the question (use broad query if filter-only)
+    const queryText = question?.trim() || 'I.F. Stone Weekly 1953';
     console.log('Creating embedding for question...');
-    const questionEmbedding = await createEmbedding(question);
+    const questionEmbedding = await createEmbedding(queryText);
 
     // Search for similar chunks in Pinecone
     console.log('Searching for similar content...');
-    const matches = await searchSimilarChunks(questionEmbedding, question, 10, filters);
+    const matches = await searchSimilarChunks(questionEmbedding, queryText, 10, filters);
 
     if (matches.length === 0) {
       const encoder = new TextEncoder();

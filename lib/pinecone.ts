@@ -37,7 +37,11 @@ export async function searchSimilarChunks(
 
   // Build Pinecone metadata filter
   const filterConditions: Record<string, any> = {};
-  if (filters.type) filterConditions.type = filters.type;
+  if (filters.type === 'article') {
+    filterConditions.type = { $in: ['analysis', 'note'] };
+  } else if (filters.type) {
+    filterConditions.type = filters.type;
+  }
   if (filters.author) filterConditions.author = filters.author;
   if (filters.year) filterConditions.year = filters.year;
 

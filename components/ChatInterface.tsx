@@ -39,7 +39,7 @@ export function ChatInterface() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !filterType) || isLoading) return;
 
     const userMessage: Message = {
       role: "user",
@@ -290,9 +290,8 @@ export function ChatInterface() {
             className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
           >
             <option value="">All types</option>
-            <option value="analysis">Analysis</option>
-            <option value="note">Note</option>
-            <option value="quotation-transcription">Quotation/Transcription</option>
+            <option value="article">Articles &amp; Notes</option>
+            <option value="quotation-transcription">Quotations &amp; Transcriptions</option>
           </select>
           {filterType && (
             <button
@@ -315,7 +314,7 @@ export function ChatInterface() {
           />
           <button
             type="submit"
-            disabled={isLoading || !input.trim()}
+            disabled={isLoading || (!input.trim() && !filterType)}
             className="bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-medium transition-colors"
           >
             Ask
