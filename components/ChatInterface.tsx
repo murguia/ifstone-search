@@ -23,7 +23,6 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [filterType, setFilterType] = useState("");
-  const [filterAuthor, setFilterAuthor] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +65,6 @@ export function ChatInterface() {
           conversationHistory,
           filters: {
             ...(filterType && { type: filterType }),
-            ...(filterAuthor && { author: filterAuthor }),
           },
         }),
       });
@@ -296,22 +294,13 @@ export function ChatInterface() {
             <option value="note">Note</option>
             <option value="quotation-transcription">Quotation/Transcription</option>
           </select>
-          <select
-            value={filterAuthor}
-            onChange={(e) => setFilterAuthor(e.target.value)}
-            className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
-          >
-            <option value="">All authors</option>
-            <option value="I.F. Stone">I.F. Stone</option>
-            <option value="Jennings Perry">Jennings Perry</option>
-          </select>
-          {(filterType || filterAuthor) && (
+          {filterType && (
             <button
               type="button"
-              onClick={() => { setFilterType(""); setFilterAuthor(""); }}
+              onClick={() => setFilterType("")}
               className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
-              Clear filters
+              Clear filter
             </button>
           )}
         </div>
