@@ -87,14 +87,17 @@ export function ChatInterface() {
         return [...prev, { role: "assistant", content: "", sources: [] }];
       });
 
+      let buffer = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n").filter((line) => line.trim());
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
+          if (!line.trim()) continue;
           try {
             const data = JSON.parse(line);
 
@@ -113,8 +116,9 @@ export function ChatInterface() {
             } else if (data.type === "error") {
               throw new Error(data.error);
             }
-          } catch (parseError) {
-            console.error("Error parsing chunk:", parseError);
+          } catch {
+            // Incomplete JSON line — will be completed in next chunk
+            buffer = line;
           }
         }
       }
