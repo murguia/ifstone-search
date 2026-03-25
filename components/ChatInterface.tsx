@@ -243,11 +243,18 @@ export function ChatInterface() {
                                 )}
                               </summary>
                               <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
-                                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                  {[source.date, source.author, source.type].filter(Boolean).join(" · ")}
-                                </div>
-                                <div className="bg-gray-50 dark:bg-gray-900/50 rounded p-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-                                  {source.text.substring(0, 300)}...
+                                <div className="bg-gray-50 dark:bg-gray-900/50 rounded p-3 mt-3 max-h-80 overflow-y-auto">
+                                  <h4 className="font-semibold text-sm text-gray-800 dark:text-gray-200 mb-1">
+                                    {source.title}
+                                  </h4>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                    {[source.date, source.author, source.type].filter(Boolean).join(" · ")}
+                                  </div>
+                                  <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed space-y-2">
+                                    {source.text.split("\n").filter(Boolean).map((para, i) => (
+                                      <p key={i}>{para}</p>
+                                    ))}
+                                  </div>
                                 </div>
                                 {source.pdfUrl && (
                                   <div className="mt-2">
