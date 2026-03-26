@@ -27,12 +27,15 @@ export async function generateAnswer(
 
 Based on the following excerpts from I.F. Stone's Weekly, answer the user's question. If the excerpts don't contain relevant information, say so. Be accurate and cite specific details when possible.
 
-Each source includes a title, date, and author. Use these to cite your sources precisely.
+CITATION RULES (mandatory):
+- Each source is labeled [Source 1], [Source 2], etc. in the context below.
+- When you use information from a source, cite it inline as [1], [2], etc.
+- Every factual claim must have at least one citation.
+- Do NOT list sources at the end — only use inline citations.
 
 Format your answer as follows:
-1. Start with 2-3 bullet points summarizing the key findings
-2. Follow with a detailed explanation providing context and analysis
-3. Cite specific article titles and dates when available
+1. Start with 2-3 bullet points summarizing the key findings (with citations)
+2. Follow with a detailed explanation providing context and analysis (with citations)
 
 Context from I.F. Stone's Weekly:
 ${context}
@@ -79,16 +82,20 @@ export async function generateAnswerStream(
 
 Based on the conversation history and excerpts from I.F. Stone's Weekly, answer the user's question. If the excerpts don't contain relevant information, say so. Be accurate and cite specific details when possible.
 
-Each source includes a title, date, and author. Use these to cite your sources precisely.
+CITATION RULES (mandatory):
+- Each source is labeled [Source 1], [Source 2], etc. in the context below.
+- When you use information from a source, cite it inline as [1], [2], etc.
+- Every factual claim must have at least one citation.
+- You may cite multiple sources for one claim: [1][3]
+- Do NOT list sources at the end — only use inline citations.
 
 Conversation Context:
 - Pay attention to the conversation history to understand follow-up questions
 - If the user asks a follow-up like "What about the 1960s?" or "Tell me more", refer back to the previous topic
 
 Format your answer as follows:
-1. Start with 2-3 bullet points summarizing the key findings
-2. Follow with a detailed explanation providing context and analysis
-3. Cite specific article titles and dates when available`;
+1. Start with 2-3 bullet points summarizing the key findings (with citations)
+2. Follow with a detailed explanation providing context and analysis (with citations)`;
 
   // Build messages array with conversation history
   const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [

@@ -1,6 +1,34 @@
 "use client";
 
-import { useState, FormEvent, useEffect, useRef } from "react";
+import { useState, FormEvent, useEffect, useRef, ReactNode } from "react";
+
+function renderCitations(text: string): ReactNode[] {
+  const parts = text.split(/(\[\d+\])/g);
+  return parts.map((part, i) => {
+    const match = part.match(/^\[(\d+)\]$/);
+    if (match) {
+      const num = match[1];
+      return (
+        <button
+          key={i}
+          onClick={() => {
+            const el = document.getElementById(`source-${num}`) as HTMLDetailsElement | null;
+            if (el) {
+              el.open = true;
+              el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              el.classList.add("ring-2", "ring-amber-400");
+              setTimeout(() => el.classList.remove("ring-2", "ring-amber-400"), 2000);
+            }
+          }}
+          className="inline-flex items-center justify-center text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 cursor-pointer bg-amber-100 dark:bg-amber-900/30 rounded px-1 mx-0.5 transition-colors"
+        >
+          {part}
+        </button>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
 
 export interface Message {
   role: "user" | "assistant";
@@ -199,7 +227,7 @@ export function ChatInterface() {
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                           {message.content.split("\n").map((line, i) => (
                             <p key={i} className={line === "" ? "h-4" : "mb-2"}>
-                              {line}
+                              {renderCitations(line)}
                             </p>
                           ))}
                         </div>
@@ -224,7 +252,8 @@ export function ChatInterface() {
                           {message.sources.map((source, idx) => (
                             <details
                               key={idx}
-                              className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white/50 dark:bg-gray-800/50"
+                              id={`source-${idx + 1}`}
+                              className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white/50 dark:bg-gray-800/50 transition-all"
                             >
                               <summary className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-amber-50/50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer">
                                 <div className="flex items-center gap-3 min-w-0">
