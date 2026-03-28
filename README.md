@@ -92,8 +92,11 @@ ifstone-search/
 │   ├── AboutSection.tsx        # 'How it works' info dialog
 │   └── ChatInterface.tsx       # Main chat UI
 ├── lib/
+│   ├── citations.ts            # Citation parser for [1], [2] references
+│   ├── filters.ts              # Pinecone metadata filter builder
 │   ├── openai.ts               # OpenAI embeddings and streaming chat
 │   └── pinecone.ts             # Pinecone search with index-topic boosting
+├── __tests__/                   # Vitest tests
 └── package.json
 ```
 
@@ -104,7 +107,18 @@ npm run dev       # Start development server
 npm run build     # Production build
 npm run start     # Start production server
 npm run lint      # Run linter
+npm test          # Run tests
+npm run test:watch # Run tests in watch mode
 ```
+
+## Testing
+
+Tests use [Vitest](https://vitest.dev/) and cover:
+
+- **Citation parsing** (`__tests__/citations.test.ts`) — verifies inline `[1]`, `[2]` citation extraction from LLM responses
+- **Pinecone filters** (`__tests__/pinecone-filters.test.ts`) — verifies metadata filter building, including the `article` → `$in` expansion
+
+CI runs automatically on every push and PR via GitHub Actions.
 
 ## Deployment
 
