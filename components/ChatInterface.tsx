@@ -48,8 +48,7 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [filterType, setFilterType] = useState("");
-  const [filterAuthor, setFilterAuthor] = useState("");
+  const [filter, setFilter] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -66,7 +65,7 @@ export function ChatInterface() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if ((!input.trim() && !filterType && !filterAuthor) || isLoading) return;
+    if ((!input.trim() && !filter) || isLoading) return;
 
     const userMessage: Message = {
       role: "user",
@@ -91,8 +90,8 @@ export function ChatInterface() {
           question,
           conversationHistory,
           filters: {
-            ...(filterType && { type: filterType }),
-            ...(filterAuthor && { author: filterAuthor }),
+            ...(filter === "quotation-transcription" && { type: "quotation-transcription" }),
+            ...(filter && filter !== "quotation-transcription" && { author: filter }),
           },
         }),
       });
@@ -176,8 +175,8 @@ export function ChatInterface() {
   }
 
   const sampleQuestions = [
-    { text: "What did I.F. Stone write about McCarthy?", author: "I.F. Stone" },
-    { text: "What was Stone's view on the Korean War armistice?", author: "" },
+    { text: "What did I.F. Stone write about McCarthy?", filter: "I.F. Stone" },
+    { text: "What was Stone's view on the Korean War armistice?", filter: "" },
   ];
 
   return (
@@ -199,7 +198,7 @@ export function ChatInterface() {
                   key={i}
                   onClick={() => {
                     setInput(question.text);
-                    if (question.author) setFilterAuthor(question.author);
+                    if (question.filter) setFilter(question.filter);
                   }}
                   className="text-left px-4 py-3 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 text-sm transition-colors border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600"
                 >
@@ -332,32 +331,15 @@ export function ChatInterface() {
         className="border-t border-amber-200 dark:border-gray-700 p-4 bg-white/50 dark:bg-gray-900/50"
       >
         <div className="flex items-center justify-between mb-3">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={filterType === "quotation-transcription"}
-            onChange={(e) => { setFilterType(e.target.checked ? "quotation-transcription" : ""); if (e.target.checked) setFilterAuthor(""); }}
-            className="w-3.5 h-3.5 rounded border-gray-300 dark:border-gray-600 text-amber-500 focus:ring-amber-500 cursor-pointer"
-          />
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            Quotations &amp; transcriptions only
-          </span>
-        </label>
           <select
-            value={filterType === "quotation-transcription" ? "_none" : filterAuthor}
-            onChange={(e) => setFilterAuthor(e.target.value)}
-            disabled={filterType === "quotation-transcription"}
-            className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
           >
-            {filterType === "quotation-transcription" ? (
-              <option value="_none">(no author)</option>
-            ) : (
-              <>
-                <option value="">All authors</option>
-                <option value="I.F. Stone">I.F. Stone</option>
-                <option value="Jennings Perry">Jennings Perry</option>
-              </>
-            )}
+            <option value="">All articles</option>
+            <option value="I.F. Stone">I.F. Stone</option>
+            <option value="Jennings Perry">Jennings Perry</option>
+            <option value="quotation-transcription">Quotations &amp; transcriptions</option>
           </select>
           {messages.length > 0 && (
             <button
@@ -380,7 +362,7 @@ export function ChatInterface() {
           />
           <button
             type="submit"
-            disabled={isLoading || (!input.trim() && !filterType && !filterAuthor)}
+            disabled={isLoading || (!input.trim() && !filter)}
             className="bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-medium transition-colors"
           >
             Ask
