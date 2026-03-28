@@ -1,4 +1,5 @@
 import { Pinecone } from '@pinecone-database/pinecone';
+import { buildPineconeFilter, SearchFilters } from './filters';
 
 if (!process.env.PINECONE_API_KEY) {
   throw new Error('PINECONE_API_KEY is not set');
@@ -10,6 +11,9 @@ export const pinecone = new Pinecone({
 
 export const PINECONE_INDEX_NAME = 'ifstone-weekly';
 
+// Re-export for consumers
+export { buildPineconeFilter, type SearchFilters } from './filters';
+
 /**
  * Search for similar chunks with index-topic boosting
  *
@@ -19,12 +23,6 @@ export const PINECONE_INDEX_NAME = 'ifstone-weekly';
  * will prioritize articles he indexed under MCCARTHY over articles that
  * merely mention the name.
  */
-export interface SearchFilters {
-  type?: string;
-  author?: string;
-  year?: string;
-}
-
 export async function searchSimilarChunks(
   embedding: number[],
   query: string,
@@ -35,15 +33,7 @@ export async function searchSimilarChunks(
 
   const fetchK = Math.min(topK * 3, 30);
 
-  // Build Pinecone metadata filter
-  const filterConditions: Record<string, any> = {};
-  if (filters.type === 'article') {
-    filterConditions.type = { $in: ['analysis', 'note'] };
-  } else if (filters.type) {
-    filterConditions.type = filters.type;
-  }
-  if (filters.author) filterConditions.author = filters.author;
-  if (filters.year) filterConditions.year = filters.year;
+  const filterConditions = buildPineconeFilter(filters);
 
   const queryParams: any = {
     vector: embedding,

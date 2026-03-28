@@ -1,18 +1,16 @@
 "use client";
 
 import { useState, FormEvent, useEffect, useRef, ReactNode } from "react";
+import { parseCitations } from "@/lib/citations";
 
 function renderCitations(text: string): ReactNode[] {
-  const parts = text.split(/(\[\d+\])/g);
-  return parts.map((part, i) => {
-    const match = part.match(/^\[(\d+)\]$/);
-    if (match) {
-      const num = match[1];
+  return parseCitations(text).map((part, i) => {
+    if (part.type === 'citation') {
       return (
         <button
           key={i}
           onClick={() => {
-            const el = document.getElementById(`source-${num}`) as HTMLDetailsElement | null;
+            const el = document.getElementById(`source-${part.num}`) as HTMLDetailsElement | null;
             if (el) {
               el.open = true;
               el.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -22,11 +20,11 @@ function renderCitations(text: string): ReactNode[] {
           }}
           className="inline-flex items-center justify-center text-xs font-medium text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 cursor-pointer bg-amber-100 dark:bg-amber-900/30 rounded px-1 mx-0.5 transition-colors"
         >
-          {part}
+          {part.value}
         </button>
       );
     }
-    return <span key={i}>{part}</span>;
+    return <span key={i}>{part.value}</span>;
   });
 }
 
