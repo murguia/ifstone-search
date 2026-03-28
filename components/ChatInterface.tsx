@@ -344,14 +344,20 @@ export function ChatInterface() {
           </span>
         </label>
           <select
-            value={filterAuthor}
+            value={filterType === "quotation-transcription" ? "_none" : filterAuthor}
             onChange={(e) => setFilterAuthor(e.target.value)}
             disabled={filterType === "quotation-transcription"}
             className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <option value="">All authors</option>
-            <option value="I.F. Stone">I.F. Stone</option>
-            <option value="Jennings Perry">Jennings Perry</option>
+            {filterType === "quotation-transcription" ? (
+              <option value="_none">(no author)</option>
+            ) : (
+              <>
+                <option value="">All authors</option>
+                <option value="I.F. Stone">I.F. Stone</option>
+                <option value="Jennings Perry">Jennings Perry</option>
+              </>
+            )}
           </select>
           {messages.length > 0 && (
             <button
