@@ -190,7 +190,7 @@ export function ChatInterface() {
             <p className="text-gray-500 dark:text-gray-400 mb-3 md:mb-8 max-w-lg mx-auto text-sm md:text-base">
               Semantic search across I.F. Stone&apos;s Weekly, one of the most
               influential independent newsletters in American journalism.
-              Currently searching 1953 — full archive through 1971 coming soon.
+              Currently searching 1953-1954 — full archive through 1971 coming soon.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl mx-auto">
               {sampleQuestions.map((question, i) => (
