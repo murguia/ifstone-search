@@ -36,7 +36,7 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-3">
               <span className="hidden sm:inline text-xs text-gray-400 dark:text-gray-500">
-                1953 &middot; 47 issues &middot; ~200 articles
+                1953-1954 &middot; 95 issues &middot; ~1,560 articles
               </span>
               <AboutSection />
             </div>
