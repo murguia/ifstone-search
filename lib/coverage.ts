@@ -1,8 +1,8 @@
 export const COVERAGE = {
   startYear: 1953,
-  endYear: 1956,
-  issues: 191,
-  articles: 1272,
+  endYear: 1957,
+  issues: 244,
+  articles: 1634,
   fullArchiveEndYear: 1971,
 } as const;
 
