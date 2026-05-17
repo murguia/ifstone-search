@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     const questionEmbedding = await createEmbedding(queryText);
 
     // Search for similar chunks in Pinecone
-    const matches = await searchSimilarChunks(questionEmbedding, queryText, 10, filters);
+    const matches = await searchSimilarChunks(questionEmbedding, 10, filters);
 
     if (matches.length === 0) {
       const encoder = new TextEncoder();

@@ -17,7 +17,6 @@ Data ingestion is handled by a companion project: [pdf-newsletter-converter](htt
 - Semantic search across I.F. Stone's Weekly articles
 - Conversational chat interface with follow-up questions
 - Source citations with article title, date, author, and type
-- Index-topic boosting — Stone's own annual index categorizations influence search ranking
 - Direct links to original PDFs on ifstone.org
 - Search history with localStorage persistence
 - Light/dark mode support
@@ -58,9 +57,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 1. **User asks a question** via the chat interface
 2. **Embedding** — question is converted to a vector using `text-embedding-3-small`
 3. **Similarity search** — top matches retrieved from Pinecone (`ifstone-weekly` index)
-4. **Index-topic boosting** — results where Stone's own index topics match query keywords get a 20% score boost
-5. **Answer generation** — `gpt-4o-mini` generates an answer using the matched article texts as context
-6. **Sources** — each result links back to the original PDF with title, date, and author
+4. **Answer generation** — `gpt-4o-mini` generates an answer using the matched article texts as context
+5. **Sources** — each result links back to the original PDF with title, date, and author
 
 ### Pinecone Vector Schema
 
@@ -95,7 +93,7 @@ ifstone-search/
 │   ├── citations.ts            # Citation parser for [1], [2] references
 │   ├── filters.ts              # Pinecone metadata filter builder
 │   ├── openai.ts               # OpenAI embeddings and streaming chat
-│   └── pinecone.ts             # Pinecone search with index-topic boosting
+│   └── pinecone.ts             # Pinecone semantic search
 ├── __tests__/                   # Vitest tests
 └── package.json
 ```
