@@ -90,22 +90,20 @@ This is a RAG (Retrieval-Augmented Generation) search interface for I.F. Stone's
 ### Core Architecture
 1. **Query Embedding**: User questions are embedded via OpenAI `text-embedding-3-small`
 2. **Vector Search**: Pinecone similarity search against the `ifstone-weekly` index
-3. **Index-Topic Boosting**: Results where Stone's own annual index topics match query keywords get a 20% score boost
-4. **Response Generation**: GPT-4o-mini generates answers grounded in matched article chunks
-5. **Streaming**: Answers stream to the client; sources appear after streaming completes
+3. **Response Generation**: GPT-4o-mini generates answers grounded in matched article chunks
+4. **Streaming**: Answers stream to the client; sources appear after streaming completes
+
+Note: Pinecone metadata includes `index_topics`/`has_index_topics` from Stone's annual index, but ranking does not currently use them. Index-topic boosting is deferred to phase 2.
 
 ### Key Components
 
 #### API Route (`app/api/chat/route.ts`)
 - Handles chat requests with streaming responses
-- Passes query text to `searchSimilarChunks` for keyword-based index-topic boosting
 - Builds LLM context from `full_text` metadata with title/date/author headers
 - Returns sources with title, date, author, type, and PDF link
 
 #### Search (`lib/pinecone.ts`)
-- `searchSimilarChunks(embedding, query, topK)` — fetches 3x candidates, applies topic boost, re-ranks
-- Parses `index_topics` (JSON string array) from Pinecone metadata
-- Compares query keywords against topics for boosting decisions
+- `searchSimilarChunks(embedding, topK, filters)` — pure semantic similarity search against Pinecone
 
 #### LLM (`lib/openai.ts`)
 - `createEmbedding` — converts text to vector via `text-embedding-3-small`

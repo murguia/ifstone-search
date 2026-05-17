@@ -67,8 +67,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                 </span>
                 <p>
                   The embedding is matched against article chunks in a vector
-                  database to find the most relevant passages. Results are boosted
-                  when they match topics from Stone&apos;s own annual index.
+                  database to find the most relevant passages.
                 </p>
               </div>
               <div className="flex gap-3">
