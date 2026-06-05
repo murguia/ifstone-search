@@ -26,3 +26,6 @@ jobs:
         env:
           PINECONE_API_KEY: dummy-for-build
           OPENAI_API_KEY: dummy-for-build
+          # Build-time only: lib/db.ts requires DATABASE_URL at import. The build
+          # never connects, so a placeholder is enough. Real value is in Vercel.
+          DATABASE_URL: postgresql://build:build@localhost:5432/build
