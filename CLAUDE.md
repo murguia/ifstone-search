@@ -105,7 +105,6 @@ Note: `index_topics` from Stone's annual index is available on each article but 
 #### Search (`lib/search.ts`, `lib/db.ts`, `lib/filters.ts`)
 - `searchArticles(queryText, embedding, topK, filters)` — hybrid (semantic + lexical) search over Postgres, RRF-fused; returns `{ metadata, score }[]`
 - `buildSqlWhere(filters, alias, params)` — parameterized SQL filter, applied to both rankers
-- `lib/pinecone.ts` is retained but unused (Pinecone not decommissioned; easy revert)
 
 #### LLM (`lib/openai.ts`)
 - `createEmbedding` — converts text to vector via `text-embedding-3-small`
@@ -154,7 +153,6 @@ or changing the embedding space is a breaking change — coordinate both repos.
 Required variables (in `.env.local`):
 - `OPENAI_API_KEY` - For embeddings and LLM responses
 - `DATABASE_URL` - Postgres + pgvector serving layer (local: `postgresql://localhost/ifstone`; production: Supabase connection string)
-- `PINECONE_API_KEY` - legacy; only needed if reverting to `lib/pinecone.ts`
 
 ### Deployment
 

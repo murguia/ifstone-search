@@ -14,8 +14,8 @@ interface Match {
 // Hybrid search over the Postgres serving layer: semantic (two-level: best
 // distance across an article's article-level and section vectors) + lexical
 // (websearch_to_tsquery over articles.fts), fused by Reciprocal Rank Fusion.
-// Returns the same { metadata, score } shape the chat route consumed from
-// Pinecone, so downstream context/source building is unchanged.
+// Returns { metadata, score } matches; the chat route builds context and
+// sources from these.
 export async function searchArticles(
   queryText: string,
   embedding: number[],
@@ -72,8 +72,7 @@ export async function searchArticles(
     .map(([id]) => id);
   if (top.length === 0) return [];
 
-  // Hydrate the winners with the metadata the route expects (date/year as the
-  // strings the Pinecone path returned).
+  // Hydrate the winners with the metadata the route expects (date/year as strings).
   const { rows } = await pool.query(
     `SELECT article_id, title, to_char(date, 'YYYY-MM-DD') AS date,
             year::text AS year, author, type, full_text, file_id, index_topics
