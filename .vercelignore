@@ -1,0 +1,3 @@
+# Legacy Pinecone-era embeddings source (457 MB) — not used at runtime; the app
+# queries Supabase. Excluded so it isn't uploaded (exceeds Vercel's 100 MB limit).
+data
