@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createEmbedding, generateAnswerStream } from '@/lib/openai';
-import { searchSimilarChunks } from '@/lib/pinecone';
+import { searchArticles } from '@/lib/search';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     const queryText = question?.trim() || 'I.F. Stone Weekly 1953';
     const questionEmbedding = await createEmbedding(queryText);
 
-    // Search for similar chunks in Pinecone
-    const matches = await searchSimilarChunks(questionEmbedding, 10, filters);
+    // Hybrid search (semantic + lexical) over the Postgres serving layer
+    const matches = await searchArticles(queryText, questionEmbedding, 10, filters);
 
     if (matches.length === 0) {
       const encoder = new TextEncoder();

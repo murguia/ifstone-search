@@ -63,19 +63,22 @@ export function ChatInterface() {
     }
   }, [messages, isLoading]);
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e: FormEvent | null, override?: { text: string; filter?: string }) {
+    e?.preventDefault();
 
-    if ((!input.trim() && !filter) || isLoading) return;
+    const question = (override?.text ?? input).trim();
+    const activeFilter = override?.filter ?? filter;
+
+    if ((!question && !activeFilter) || isLoading) return;
 
     const userMessage: Message = {
       role: "user",
-      content: input.trim(),
+      content: question,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    const question = input.trim();
     setInput("");
+    if (override?.filter) setFilter(override.filter);
     setIsLoading(true);
 
     try {
@@ -91,8 +94,8 @@ export function ChatInterface() {
           question,
           conversationHistory,
           filters: {
-            ...(filter === "quotation-transcription" && { type: "quotation-transcription" }),
-            ...(filter && filter !== "quotation-transcription" && { author: filter }),
+            ...(activeFilter === "quotation-transcription" && { type: "quotation-transcription" }),
+            ...(activeFilter && activeFilter !== "quotation-transcription" && { author: activeFilter }),
           },
         }),
       });
@@ -197,10 +200,7 @@ export function ChatInterface() {
               {sampleQuestions.map((question, i) => (
                 <button
                   key={i}
-                  onClick={() => {
-                    setInput(question.text);
-                    if (question.filter) setFilter(question.filter);
-                  }}
+                  onClick={() => handleSubmit(null, { text: question.text, filter: question.filter })}
                   className="text-left px-4 py-3 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 text-sm transition-colors border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600"
                 >
                   {question.text}

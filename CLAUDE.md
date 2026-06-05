@@ -85,15 +85,15 @@ Always run `npm run build` to validate changes (includes type checking and linti
 
 ## Architecture Overview
 
-This is a RAG (Retrieval-Augmented Generation) search interface for I.F. Stone's Weekly (1953-1971). Data ingestion (PDF conversion, review, Pinecone upload) is handled by a separate private repo: [pdf-newsletter-converter](https://github.com/murguia/pdf-newsletter-converter).
+This is a RAG (Retrieval-Augmented Generation) search interface for I.F. Stone's Weekly (1953-1971). Data ingestion (PDF conversion, review, Postgres build) is handled by a separate private repo: [pdf-newsletter-converter](https://github.com/murguia/pdf-newsletter-converter), which **owns the database the app queries**. The full backend↔frontend data contract (schema, value semantics, invariants, change policy) lives there as `docs/data-contract.md`; the stub below is the self-sufficient consumer view.
 
 ### Core Architecture
 1. **Query Embedding**: User questions are embedded via OpenAI `text-embedding-3-small`
-2. **Vector Search**: Pinecone similarity search against the `ifstone-weekly` index
+2. **Hybrid Search**: Postgres + pgvector — semantic (two-level: best distance across an article's article-level and section vectors) fused with lexical full-text search via Reciprocal Rank Fusion (`lib/search.ts`)
 3. **Response Generation**: GPT-4o-mini generates answers grounded in matched article chunks
 4. **Streaming**: Answers stream to the client; sources appear after streaming completes
 
-Note: Pinecone metadata includes `index_topics`/`has_index_topics` from Stone's annual index, but ranking does not currently use them. Index-topic boosting is deferred to phase 2.
+Note: `index_topics` from Stone's annual index is available on each article but ranking does not currently use it. Index-topic boosting is deferred to phase 2.
 
 ### Key Components
 
@@ -102,8 +102,10 @@ Note: Pinecone metadata includes `index_topics`/`has_index_topics` from Stone's 
 - Builds LLM context from `full_text` metadata with title/date/author headers
 - Returns sources with title, date, author, type, and PDF link
 
-#### Search (`lib/pinecone.ts`)
-- `searchSimilarChunks(embedding, topK, filters)` — pure semantic similarity search against Pinecone
+#### Search (`lib/search.ts`, `lib/db.ts`, `lib/filters.ts`)
+- `searchArticles(queryText, embedding, topK, filters)` — hybrid (semantic + lexical) search over Postgres, RRF-fused; returns `{ metadata, score }[]`
+- `buildSqlWhere(filters, alias, params)` — parameterized SQL filter, applied to both rankers
+- `lib/pinecone.ts` is retained but unused (Pinecone not decommissioned; easy revert)
 
 #### LLM (`lib/openai.ts`)
 - `createEmbedding` — converts text to vector via `text-embedding-3-small`
@@ -119,28 +121,40 @@ Note: Pinecone metadata includes `index_topics`/`has_index_topics` from Stone's 
 #### About Dialog (`components/AboutSection.tsx`)
 - "How it works" modal explaining semantic search pipeline
 
-### Pinecone Vector Schema
+### Data contract (consumer stub)
 
-Each vector in `ifstone-weekly` carries metadata produced by pdf-newsletter-converter:
+The app queries a Postgres + pgvector database built and owned by
+[pdf-newsletter-converter](https://github.com/murguia/pdf-newsletter-converter)
+(authoritative contract: its `docs/data-contract.md`). The coupling is the schema,
+not a network API — `lib/search.ts` runs SQL directly. What this app depends on:
 
-| Field | Type | Description |
+**Embedding invariant (breaks silently if violated):** queries must be embedded with
+the **same** model the corpus was — `text-embedding-3-small`, 1536 dims, cosine.
+Pinned in `lib/openai.ts` `EMBEDDING_MODEL`; must match the backend's.
+
+**Returned per match** (the `metadata`), from the `articles` table:
+
+| Field | Type | Notes |
 |---|---|---|
 | `title` | string | Article title |
-| `date` | string | Publication date (YYYY-MM-DD) |
+| `date` | string | `YYYY-MM-DD` |
 | `year` | string | Publication year |
-| `author` | string | "I.F. Stone", "Jennings Perry", etc. |
-| `type` | string | `analysis`, `note`, or `quotation-transcription` |
+| `author` | string | `'I.F. Stone'` = his own voice; others are guest/wire |
+| `type` | string | `analysis` \| `note` \| `quotation-transcription` (reproduced material) |
 | `full_text` | string | Complete article text |
-| `text` | string | First 1000 chars |
-| `file_id` | string | PDF filename (e.g., `IFStonesWeekly-1953apr04.pdf`) |
-| `index_topics` | string | JSON array of Stone's topic tags from annual index |
-| `has_index_topics` | bool | Whether this article has index tags |
+| `file_id` | string | PDF filename → `https://www.ifstone.org/weekly/{file_id}` |
+| `index_topics` | string[] | Stone's topic tags from the annual index |
+
+Also queried (not returned): `articles.embedding` / `sections.embedding` (semantic),
+`articles.fts` (lexical). Adding columns is safe; renaming/retyping a column above
+or changing the embedding space is a breaking change — coordinate both repos.
 
 ### Environment Configuration
 
 Required variables (in `.env.local`):
 - `OPENAI_API_KEY` - For embeddings and LLM responses
-- `PINECONE_API_KEY` - Vector database queries
+- `DATABASE_URL` - Postgres + pgvector serving layer (local: `postgresql://localhost/ifstone`; production: Supabase connection string)
+- `PINECONE_API_KEY` - legacy; only needed if reverting to `lib/pinecone.ts`
 
 ### Deployment
 
