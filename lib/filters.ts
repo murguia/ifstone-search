@@ -6,19 +6,7 @@ export interface SearchFilters {
   dateTo?: string;   // 'YYYY-MM-DD'
 }
 
-export function buildPineconeFilter(filters: SearchFilters): Record<string, any> {
-  const conditions: Record<string, any> = {};
-  if (filters.type === 'article') {
-    conditions.type = { $in: ['analysis', 'note'] };
-  } else if (filters.type) {
-    conditions.type = filters.type;
-  }
-  if (filters.author) conditions.author = filters.author;
-  if (filters.year) conditions.year = filters.year;
-  return conditions;
-}
-
-// SQL counterpart of buildPineconeFilter for the Postgres serving layer.
+// Parameterized SQL filter for the Postgres serving layer.
 // Appends each value to `params` and returns an " AND ..." fragment whose
 // placeholders ($N) point at those positions. `alias` is the table the
 // predicates apply to (the articles table directly, or `a` when sections are
