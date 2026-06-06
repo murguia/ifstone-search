@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect, useRef, ReactNode } from "react";
 import { parseCitations } from "@/lib/citations";
 import { COVERAGE_RANGE } from "@/lib/coverage";
+import ArticleReader, { type ReaderSource } from "@/components/ArticleReader";
 
 function renderCitations(text: string): ReactNode[] {
   return parseCitations(text).map((part, i) => {
@@ -34,6 +35,7 @@ export interface Message {
   content: string;
   interpretation?: string;
   sources?: Array<{
+    id: string;
     title: string;
     text: string;
     date?: string;
@@ -51,6 +53,7 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState("");
+  const [readerSource, setReaderSource] = useState<ReaderSource | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -295,21 +298,23 @@ export function ChatInterface() {
                                 )}
                               </summary>
                               <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
-                                <div className="bg-gray-50 dark:bg-gray-900/50 rounded p-3 mt-3 max-h-80 overflow-y-auto">
-                                  <h4 className="font-semibold text-sm text-gray-800 dark:text-gray-200 mb-1">
-                                    {source.title}
-                                  </h4>
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                                    {[source.date, source.author, source.type].filter(Boolean).join(" · ")}
-                                  </div>
-                                  <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed space-y-2">
-                                    {source.text.split("\n").filter(Boolean).map((para, i) => (
-                                      <p key={i}>{para}</p>
-                                    ))}
+                                <div className="bg-gray-50 dark:bg-gray-900/50 rounded p-3 mt-3">
+                                  <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                    {source.text}
                                   </div>
                                 </div>
-                                {source.pdfUrl && (
-                                  <div className="mt-2">
+                                <div className="mt-2 flex items-center gap-4">
+                                  <button
+                                    type="button"
+                                    onClick={() => setReaderSource(source)}
+                                    className="text-xs text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors flex items-center gap-1"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                    Read full article
+                                  </button>
+                                  {source.pdfUrl && (
                                     <a
                                       href={source.pdfUrl}
                                       target="_blank"
@@ -321,8 +326,8 @@ export function ChatInterface() {
                                       </svg>
                                       View original PDF
                                     </a>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             </details>
                           ))}
@@ -391,6 +396,10 @@ export function ChatInterface() {
           </button>
         </div>
       </form>
+
+      {readerSource && (
+        <ArticleReader source={readerSource} onClose={() => setReaderSource(null)} />
+      )}
     </div>
   );
 }
