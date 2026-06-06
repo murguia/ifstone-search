@@ -14,7 +14,7 @@ export async function GET(
 
   const { rows } = await pool.query(
     `SELECT article_id AS id, title, to_char(date, 'YYYY-MM-DD') AS date,
-            year::text AS year, author, type, full_text, file_id
+            year::text AS year, author, type, full_text, file_id, pages
      FROM articles WHERE article_id = $1`,
     [id]
   );

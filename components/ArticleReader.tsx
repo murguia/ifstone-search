@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { formatPages } from '@/lib/pages';
 
 export interface ReaderSource {
   id: string;
@@ -9,6 +10,7 @@ export interface ReaderSource {
   date?: string;
   author?: string;
   type?: string;
+  pages?: number[];
   pdfUrl?: string;
 }
 
@@ -49,7 +51,9 @@ export default function ArticleReader({
     };
   }, [source.id]);
 
-  const meta = [source.date, source.author, source.type].filter(Boolean).join(' · ');
+  const meta = [source.date, source.author, source.type, formatPages(source.pages)]
+    .filter(Boolean)
+    .join(' · ');
 
   return createPortal(
     <div className="fixed inset-0 z-[100] overflow-y-auto">

@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
         year: metadata.year,
         author: metadata.author,
         type: metadata.type,
+        pages: metadata.pages,
         filename: fileId,
         pdfUrl: pdfUrl,
         score: match.score,
