@@ -138,11 +138,17 @@ Pinned in `lib/openai.ts` `EMBEDDING_MODEL`; must match the backend's.
 | `title` | string | Article title |
 | `date` | string | `YYYY-MM-DD` |
 | `year` | string | Publication year |
-| `author` | string | `'I.F. Stone'` = his own voice; others are guest/wire |
+| `author` | string \| null | `'I.F. Stone'` = his own voice; others are guest/wire; **null/blank on `quotation-transcription` rows** (reproduced material has no byline) |
 | `type` | string | `analysis` \| `note` \| `quotation-transcription` (reproduced material) |
 | `full_text` | string | Complete article text |
 | `file_id` | string | PDF filename → `https://www.ifstone.org/weekly/{file_id}` |
 | `index_topics` | string[] | Stone's topic tags from the annual index |
+
+**Author/type interaction:** because `quotation-transcription` rows carry no author,
+filtering `author = 'I.F. Stone'` already excludes reproduced material — so adding
+`type` is redundant when the author filter is set. Use `type = 'quotation-transcription'`
+to *reach* reproduced material (it can't be found via author). The self-query prompt in
+`lib/self-query.ts` relies on this.
 
 Also queried (not returned): `articles.embedding` / `sections.embedding` (semantic),
 `articles.fts` (lexical). Adding columns is safe; renaming/retyping a column above
