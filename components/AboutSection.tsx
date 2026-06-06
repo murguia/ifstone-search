@@ -46,9 +46,10 @@ function AboutModal({ onClose }: { onClose: () => void }) {
           <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
             <p>
               This app lets you explore I.F. Stone&apos;s Weekly using natural
-              language. Instead of keyword search, it uses{' '}
+              language. It combines{' '}
               <span className="text-amber-600 dark:text-amber-400">semantic search</span>{' '}
-              to find articles by meaning.
+              (matching by meaning) with keyword search, and reads your question
+              for filters &mdash; author, dates, document type &mdash; automatically.
             </p>
 
             <div className="space-y-3">
@@ -57,8 +58,12 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                   1
                 </span>
                 <p>
-                  Your question is converted into a vector embedding that
-                  captures its semantic meaning.
+                  Your question is first read for{' '}
+                  <span className="text-amber-600 dark:text-amber-400">filters</span>.
+                  Phrases like &ldquo;before the LBJ administration&rdquo; become a
+                  date cutoff (issues before Nov 1963), and &ldquo;what did Stone
+                  think&rdquo; narrows to his own articles. When filters are applied,
+                  a one-line note above the answer shows how your question was read.
                 </p>
               </div>
               <div className="flex gap-3">
@@ -66,8 +71,8 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                   2
                 </span>
                 <p>
-                  The embedding is matched against article chunks in a vector
-                  database to find the most relevant passages.
+                  The topical part of your question is converted into a vector
+                  embedding that captures its meaning.
                 </p>
               </div>
               <div className="flex gap-3">
@@ -75,12 +80,23 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                   3
                 </span>
                 <p>
+                  That embedding is combined with a keyword search across the
+                  article archive &mdash; with any inferred filters applied &mdash;
+                  to find the most relevant passages.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <span className="bg-amber-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                  4
+                </span>
+                <p>
                   The top 10 matching articles are listed as{' '}
                   <span className="text-amber-600 dark:text-amber-400">Sources</span>,
                   ranked by relevance score. All 10 are passed as context to an
-                  AI model, which synthesizes a narrative answer. The answer may
-                  emphasize only a few of the sources — the full list lets you
-                  explore what else the search found.
+                  AI model, which synthesizes a narrative answer with inline
+                  citations. The answer may emphasize only a few of the sources —
+                  the full list lets you verify and explore what else the search
+                  found.
                 </p>
               </div>
             </div>
