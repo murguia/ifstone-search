@@ -75,7 +75,7 @@ export async function searchArticles(
   // Hydrate the winners with the metadata the route expects (date/year as strings).
   const { rows } = await pool.query(
     `SELECT article_id, title, to_char(date, 'YYYY-MM-DD') AS date,
-            year::text AS year, author, type, full_text, file_id, index_topics
+            year::text AS year, author, type, full_text, file_id, index_topics, pages
      FROM articles WHERE article_id = ANY($1)`,
     [top]
   );

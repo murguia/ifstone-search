@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect, useRef, ReactNode } from "react";
 import { parseCitations } from "@/lib/citations";
 import { COVERAGE_RANGE } from "@/lib/coverage";
+import { formatPages } from "@/lib/pages";
 import ArticleReader, { type ReaderSource } from "@/components/ArticleReader";
 
 function renderCitations(text: string): ReactNode[] {
@@ -42,6 +43,7 @@ export interface Message {
     year: string;
     author?: string;
     type?: string;
+    pages?: number[];
     filename: string;
     pdfUrl?: string;
     score?: number;
@@ -287,7 +289,7 @@ export function ChatInterface() {
                                       {source.title}
                                     </span>
                                     <div className="text-xs text-gray-400 dark:text-gray-500">
-                                      {[source.date, source.author, source.type].filter(Boolean).join(" · ")}
+                                      {[source.date, source.author, source.type, formatPages(source.pages)].filter(Boolean).join(" · ")}
                                     </div>
                                   </div>
                                 </div>
