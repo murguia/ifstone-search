@@ -70,14 +70,24 @@ export async function POST(request: NextRequest) {
       })
       .join('\n\n');
 
+    const PREVIEW_LEN = 280;
     const sources = matches.map((match) => {
       const metadata = match.metadata as Record<string, any>;
       const fileId = metadata.file_id || metadata.filename;
       const pdfUrl = `https://www.ifstone.org/weekly/${fileId}`;
 
+      // Ship only a short preview; the full text is fetched on demand via
+      // /api/article/[id] when the reader is opened (keeps this payload small).
+      const fullText = metadata.full_text || metadata.text || '';
+      const preview =
+        fullText.length > PREVIEW_LEN
+          ? fullText.slice(0, PREVIEW_LEN).trimEnd() + '…'
+          : fullText;
+
       return {
+        id: metadata.article_id,
         title: metadata.title || metadata.article_title || fileId,
-        text: metadata.full_text || metadata.text,
+        text: preview,
         date: metadata.date,
         year: metadata.year,
         author: metadata.author,
