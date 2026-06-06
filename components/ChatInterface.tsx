@@ -32,6 +32,7 @@ function renderCitations(text: string): ReactNode[] {
 export interface Message {
   role: "user" | "assistant";
   content: string;
+  interpretation?: string;
   sources?: Array<{
     title: string;
     text: string;
@@ -130,7 +131,19 @@ export function ChatInterface() {
           try {
             const data = JSON.parse(line);
 
-            if (data.type === "sources") {
+            if (data.type === "interpretation") {
+              const interpretation = data.interpretation || "";
+              if (interpretation) {
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  newMessages[assistantMessageIndex] = {
+                    ...newMessages[assistantMessageIndex],
+                    interpretation,
+                  };
+                  return newMessages;
+                });
+              }
+            } else if (data.type === "sources") {
               sources = data.sources;
             } else if (data.type === "content") {
               content += data.content;
@@ -220,6 +233,14 @@ export function ChatInterface() {
                   </div>
                 ) : (
                   <div>
+                    {message.interpretation && (
+                      <div className="mb-2 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L14 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 018 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                        </svg>
+                        <span>{message.interpretation}</span>
+                      </div>
+                    )}
                     <div className="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 px-5 py-4 rounded-2xl rounded-bl-md max-w-[90%] shadow-sm">
                       {message.content ? (
                         <div className="prose prose-sm dark:prose-invert max-w-none">
