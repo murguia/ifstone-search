@@ -192,8 +192,8 @@ export function ChatInterface() {
   }
 
   const sampleQuestions = [
-    { text: "What did I.F. Stone write about McCarthy?", filter: "I.F. Stone" },
-    { text: "What was Stone's view on the Korean War armistice?", filter: "" },
+    { text: "What did I.F. Stone write about the Gulf of Tonkin Incident?", filter: "" },
+    { text: "What did I.F. Stone think about Eugene McCarthy vs. RFK in the 1968 primary?", filter: "" },
   ];
 
   return (

@@ -27,7 +27,7 @@ describe('ChatInterface sample questions', () => {
     Element.prototype.scrollIntoView = vi.fn();
     global.fetch = vi.fn().mockResolvedValue(
       streamResponse([
-        JSON.stringify({ type: 'content', content: 'Stone attacked McCarthy.' }),
+        JSON.stringify({ type: 'content', content: 'Stone wrote about the incident.' }),
       ])
     ) as unknown as typeof fetch;
   });
@@ -37,12 +37,12 @@ describe('ChatInterface sample questions', () => {
     vi.restoreAllMocks();
   });
 
-  it('submits the search (with its author filter) when a sample question is clicked', async () => {
+  it('submits the search when a sample question is clicked', async () => {
     render(<ChatInterface />);
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: /What did I\.F\. Stone write about McCarthy\?/i,
+        name: /What did I\.F\. Stone write about the Gulf of Tonkin Incident\?/i,
       })
     );
 
@@ -52,12 +52,13 @@ describe('ChatInterface sample questions', () => {
     expect(url).toBe('/api/chat');
 
     const body = JSON.parse(init.body);
-    expect(body.question).toBe('What did I.F. Stone write about McCarthy?');
-    expect(body.filters).toEqual({ author: 'I.F. Stone' });
+    expect(body.question).toBe('What did I.F. Stone write about the Gulf of Tonkin Incident?');
+    // No UI filter on this sample — filters are inferred server-side by self-query.
+    expect(body.filters).toEqual({});
 
     // The streamed answer renders, proving the full submit→stream→render path.
     await waitFor(() =>
-      expect(screen.getByText('Stone attacked McCarthy.')).toBeTruthy()
+      expect(screen.getByText('Stone wrote about the incident.')).toBeTruthy()
     );
   });
 });
