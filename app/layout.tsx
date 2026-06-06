@@ -16,9 +16,9 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image-v2.png",
-        width: 1200,
-        height: 630,
+        url: "/og-image-v3.png",
+        width: 2400,
+        height: 1260,
         alt: "I.F. Stone's Weekly Search — AI-powered semantic search",
       },
     ],
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "I.F. Stone's Weekly Search",
     description: "AI-powered semantic search across I.F. Stone's Weekly (1953-1971).",
-    images: ["/og-image-v2.png"],
+    images: ["/og-image-v3.png"],
   },
 };
 
