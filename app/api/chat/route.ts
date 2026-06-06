@@ -1,6 +1,8 @@
 import { NextRequest } from 'next/server';
 import { createEmbedding, generateAnswerStream } from '@/lib/openai';
 import { searchArticles } from '@/lib/search';
+import { parseQuery, type ParsedQuery } from '@/lib/self-query';
+import type { SearchFilters } from '@/lib/filters';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -21,12 +23,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate embedding for the question (use broad query if filter-only)
-    const queryText = question?.trim() || 'I.F. Stone Weekly 1953';
+    const uiFilters = (filters || {}) as SearchFilters;
+
+    // Self-query: infer filters + a cleaner semantic query from the question.
+    // parseQuery never throws — on any failure it returns the question unchanged
+    // with no filters, i.e. plain hybrid search. Skip it for filter-only requests.
+    let parsed: ParsedQuery = { semanticQuery: '', filters: {}, interpretation: '' };
+    if (question && typeof question === 'string' && question.trim()) {
+      parsed = await parseQuery(question);
+    }
+
+    // Explicit UI filters always win over inferred ones.
+    const merged: SearchFilters = { ...parsed.filters, ...uiFilters };
+
+    // Retrieve on the semantic part; fall back to the raw question, then a broad query.
+    const queryText =
+      parsed.semanticQuery?.trim() || question?.trim() || 'I.F. Stone Weekly 1953';
     const questionEmbedding = await createEmbedding(queryText);
 
     // Hybrid search (semantic + lexical) over the Postgres serving layer
-    const matches = await searchArticles(queryText, questionEmbedding, 10, filters);
+    const matches = await searchArticles(queryText, questionEmbedding, 10, merged);
 
     if (matches.length === 0) {
       const encoder = new TextEncoder();
@@ -76,7 +92,18 @@ export async function POST(request: NextRequest) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        // Send sources first
+        // How the query was read (inferred filters), so the UI can surface it.
+        controller.enqueue(
+          encoder.encode(
+            JSON.stringify({
+              type: 'interpretation',
+              interpretation: parsed.interpretation,
+              filters: merged,
+            }) + '\n'
+          )
+        );
+
+        // Send sources next
         controller.enqueue(
           encoder.encode(JSON.stringify({ type: 'sources', sources }) + '\n')
         );
