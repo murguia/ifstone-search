@@ -138,17 +138,22 @@ Pinned in `lib/openai.ts` `EMBEDDING_MODEL`; must match the backend's.
 | `title` | string | Article title |
 | `date` | string | `YYYY-MM-DD` |
 | `year` | string | Publication year |
-| `author` | string \| null | `'I.F. Stone'` = his own voice; others are guest/wire; **null/blank on `quotation-transcription` rows** (reproduced material has no byline) |
+| `author` | string \| null | `'I.F. Stone'` = his own voice; others are guest/wire; **usually null on `quotation-transcription` rows**, though a few carry the reproduced speaker |
 | `type` | string | `analysis` \| `note` \| `quotation-transcription` (reproduced material) |
 | `full_text` | string | Complete article text |
 | `file_id` | string | PDF filename → `https://www.ifstone.org/weekly/{file_id}` |
 | `index_topics` | string[] | Stone's topic tags from the annual index |
 
-**Author/type interaction:** because `quotation-transcription` rows carry no author,
-filtering `author = 'I.F. Stone'` already excludes reproduced material — so adding
-`type` is redundant when the author filter is set. Use `type = 'quotation-transcription'`
-to *reach* reproduced material (it can't be found via author). The self-query prompt in
-`lib/self-query.ts` relies on this.
+**Author/type interaction:** most `quotation-transcription` rows have no author, but not
+all — a few carry the reproduced speaker — so `author IS NULL` is *not* the same as "is
+reproduced material." Isolating Stone's own voice robustly takes **both** conditions:
+`author = 'I.F. Stone' AND type <> 'quotation-transcription'` (in `buildSqlWhere`,
+`type: 'article'` maps to that `<>`). `author = 'I.F. Stone'` alone is clean only by the
+current data state, not by contract — Stone has been misattributed on q-t rows before. To
+*reach* reproduced material, filter `type = 'quotation-transcription'` (it can't be found
+via author). Conversely, never pair an author with `type = 'quotation-transcription'`: the
+intersection is ~empty. `lib/self-query.ts` enforces that last rule; the full voice guard
+is tracked in issue #35.
 
 **Stone's self-reference:** the `author` value is canonical (`'I.F. Stone'`), but within
 `full_text` Stone refers to himself as **"IFS"** (and "Izzy"). User queries may use these
