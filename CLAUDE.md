@@ -150,6 +150,10 @@ filtering `author = 'I.F. Stone'` already excludes reproduced material — so ad
 to *reach* reproduced material (it can't be found via author). The self-query prompt in
 `lib/self-query.ts` relies on this.
 
+**Stone's self-reference:** the `author` value is canonical (`'I.F. Stone'`), but within
+`full_text` Stone refers to himself as **"IFS"** (and "Izzy"). User queries may use these
+forms; `lib/self-query.ts` maps "IFS" / "Izzy" / "Stone" → author `'I.F. Stone'`.
+
 Also queried (not returned): `articles.embedding` / `sections.embedding` (semantic),
 `articles.fts` (lexical). Adding columns is safe; renaming/retyping a column above
 or changing the embedding space is a breaking change — coordinate both repos.
