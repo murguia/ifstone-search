@@ -53,8 +53,8 @@ describe('ChatInterface sample questions', () => {
 
     const body = JSON.parse(init.body);
     expect(body.question).toBe('What did I.F. Stone write about the Gulf of Tonkin Incident?');
-    // No UI filter on this sample — filters are inferred server-side by self-query.
-    expect(body.filters).toEqual({});
+    // Client sends no filters — they're inferred server-side by self-query.
+    expect(body.filters).toBeUndefined();
 
     // The streamed answer renders, proving the full submit→stream→render path.
     await waitFor(() =>

@@ -54,7 +54,6 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [filter, setFilter] = useState("");
   const [readerSource, setReaderSource] = useState<ReaderSource | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -69,13 +68,12 @@ export function ChatInterface() {
     }
   }, [messages, isLoading]);
 
-  async function handleSubmit(e: FormEvent | null, override?: { text: string; filter?: string }) {
+  async function handleSubmit(e: FormEvent | null, override?: { text: string }) {
     e?.preventDefault();
 
     const question = (override?.text ?? input).trim();
-    const activeFilter = override?.filter ?? filter;
 
-    if ((!question && !activeFilter) || isLoading) return;
+    if (!question || isLoading) return;
 
     const userMessage: Message = {
       role: "user",
@@ -84,7 +82,6 @@ export function ChatInterface() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
-    if (override?.filter) setFilter(override.filter);
     setIsLoading(true);
 
     try {
@@ -93,17 +90,11 @@ export function ChatInterface() {
         content: msg.content,
       }));
 
+      // Filters are inferred server-side by self-query; the client sends none.
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question,
-          conversationHistory,
-          filters: {
-            ...(activeFilter === "quotation-transcription" && { type: "quotation-transcription" }),
-            ...(activeFilter && activeFilter !== "quotation-transcription" && { author: activeFilter }),
-          },
-        }),
+        body: JSON.stringify({ question, conversationHistory }),
       });
 
       if (!response.ok) throw new Error("Failed to get response");
@@ -197,8 +188,8 @@ export function ChatInterface() {
   }
 
   const sampleQuestions = [
-    { text: "What did I.F. Stone write about the Gulf of Tonkin Incident?", filter: "" },
-    { text: "What did I.F. Stone think about Eugene McCarthy vs. RFK in the 1968 primary?", filter: "" },
+    { text: "What did I.F. Stone write about the Gulf of Tonkin Incident?" },
+    { text: "What did I.F. Stone think about Eugene McCarthy vs. RFK in the 1968 primary?" },
   ];
 
   return (
@@ -218,7 +209,7 @@ export function ChatInterface() {
               {sampleQuestions.map((question, i) => (
                 <button
                   key={i}
-                  onClick={() => handleSubmit(null, { text: question.text, filter: question.filter })}
+                  onClick={() => handleSubmit(null, { text: question.text })}
                   className="text-left px-4 py-3 bg-white dark:bg-gray-800 hover:bg-amber-50 dark:hover:bg-gray-700 rounded-lg text-gray-700 dark:text-gray-300 text-sm transition-colors border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600"
                 >
                   {question.text}
@@ -359,18 +350,8 @@ export function ChatInterface() {
         onSubmit={handleSubmit}
         className="border-t border-amber-200 dark:border-gray-700 p-4 bg-white/50 dark:bg-gray-900/50"
       >
-        <div className="flex items-center justify-between mb-3">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-amber-500"
-          >
-            <option value="">All articles</option>
-            <option value="I.F. Stone">I.F. Stone</option>
-            <option value="Jennings Perry">Jennings Perry</option>
-            <option value="quotation-transcription">Quotations &amp; transcriptions</option>
-          </select>
-          {messages.length > 0 && (
+        {messages.length > 0 && (
+          <div className="flex items-center justify-end mb-3">
             <button
               type="button"
               onClick={() => setMessages([])}
@@ -378,8 +359,8 @@ export function ChatInterface() {
             >
               Clear chat
             </button>
-          )}
-        </div>
+          </div>
+        )}
         <div className="flex gap-3">
           <input
             type="text"
@@ -391,7 +372,7 @@ export function ChatInterface() {
           />
           <button
             type="submit"
-            disabled={isLoading || (!input.trim() && !filter)}
+            disabled={isLoading || !input.trim()}
             className="bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-medium transition-colors"
           >
             Ask
