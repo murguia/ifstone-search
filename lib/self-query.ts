@@ -31,7 +31,8 @@ let authorCache: Promise<AuthorData> | null = null;
 // Load the corpus author set once per server instance. Used to validate an
 // inferred author against names that actually exist (so a hallucinated name
 // can't zero out the results) and to seed the prompt with the recurring authors.
-function loadAuthors(): Promise<AuthorData> {
+// Exported so the agent loop can validate its tool arguments against the same set.
+export function loadAuthors(): Promise<AuthorData> {
   if (!authorCache) {
     authorCache = (async () => {
       try {
@@ -108,12 +109,10 @@ function isValidCorpusDate(d: unknown): d is string {
 }
 
 // Build a clean SearchFilters from only the fields that survive validation.
-// Pure and side-effect free so the guardrails can be unit-tested without the LLM.
-export function sanitizeParsedQuery(
-  raw: any,
-  question: string,
-  allowedAuthors: Set<string>
-): ParsedQuery {
+// Pure and side-effect free so the guardrails can be unit-tested without the
+// LLM, and shared between the self-query parse and the agent's tool arguments
+// (which may carry year as a string).
+export function sanitizeFilters(raw: any, allowedAuthors: Set<string>): SearchFilters {
   const filters: SearchFilters = {};
 
   if (typeof raw?.type === 'string' && VALID_TYPES.has(raw.type)) {
@@ -126,13 +125,15 @@ export function sanitizeParsedQuery(
     filters.author = raw.author;
   }
 
+  const year =
+    typeof raw?.year === 'string' && raw.year.trim() ? Number(raw.year) : raw?.year;
   if (
-    typeof raw?.year === 'number' &&
-    Number.isInteger(raw.year) &&
-    raw.year >= CORPUS_START_YEAR &&
-    raw.year <= CORPUS_END_YEAR
+    typeof year === 'number' &&
+    Number.isInteger(year) &&
+    year >= CORPUS_START_YEAR &&
+    year <= CORPUS_END_YEAR
   ) {
-    filters.year = String(raw.year);
+    filters.year = String(year);
   }
 
   let dateFrom = isValidCorpusDate(raw?.dateFrom) ? raw.dateFrom : undefined;
@@ -144,6 +145,17 @@ export function sanitizeParsedQuery(
   }
   if (dateFrom) filters.dateFrom = dateFrom;
   if (dateTo) filters.dateTo = dateTo;
+
+  return filters;
+}
+
+// Assemble the full ParsedQuery around the validated filters.
+export function sanitizeParsedQuery(
+  raw: any,
+  question: string,
+  allowedAuthors: Set<string>
+): ParsedQuery {
+  const filters = sanitizeFilters(raw, allowedAuthors);
 
   const semanticQuery =
     typeof raw?.semanticQuery === 'string' && raw.semanticQuery.trim()

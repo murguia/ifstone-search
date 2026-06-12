@@ -42,7 +42,7 @@ describe('ChatInterface sample questions', () => {
 
     fireEvent.click(
       screen.getByRole('button', {
-        name: /What did I\.F\. Stone write about the Gulf of Tonkin Incident\?/i,
+        name: /How did I\.F\. Stone's view of the Vietnam War evolve from 1954 to 1968\?/i,
       })
     );
 
@@ -52,7 +52,7 @@ describe('ChatInterface sample questions', () => {
     expect(url).toBe('/api/chat');
 
     const body = JSON.parse(init.body);
-    expect(body.question).toBe('What did I.F. Stone write about the Gulf of Tonkin Incident?');
+    expect(body.question).toBe("How did I.F. Stone's view of the Vietnam War evolve from 1954 to 1968?");
     // Client sends no filters — they're inferred server-side by self-query.
     expect(body.filters).toBeUndefined();
 

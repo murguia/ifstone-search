@@ -31,10 +31,39 @@ function renderCitations(text: string): ReactNode[] {
   });
 }
 
+export interface ProgressStep {
+  step: number;
+  action: "search" | "read";
+  detail: string;
+  filters?: {
+    type?: string;
+    author?: string;
+    year?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  };
+}
+
+// Compact one-line label for a research step, e.g.
+// Searched “Vietnam escalation” (I.F. Stone · 1964-01-01 – 1968-12-31)
+function progressLabel(step: ProgressStep): string {
+  if (step.action === "read") return `Read “${step.detail}”`;
+  const f = step.filters;
+  const parts: string[] = [];
+  if (f?.author) parts.push(f.author);
+  if (f?.type) parts.push(f.type);
+  if (f?.year) parts.push(f.year);
+  else if (f?.dateFrom && f?.dateTo) parts.push(`${f.dateFrom} – ${f.dateTo}`);
+  else if (f?.dateFrom) parts.push(`from ${f.dateFrom}`);
+  else if (f?.dateTo) parts.push(`until ${f.dateTo}`);
+  return `Searched “${step.detail}”${parts.length ? ` (${parts.join(" · ")})` : ""}`;
+}
+
 export interface Message {
   role: "user" | "assistant";
   content: string;
   interpretation?: string;
+  progress?: ProgressStep[];
   sources?: Array<{
     id: string;
     title: string;
@@ -127,7 +156,23 @@ export function ChatInterface() {
           try {
             const data = JSON.parse(line);
 
-            if (data.type === "interpretation") {
+            if (data.type === "progress") {
+              const step: ProgressStep = {
+                step: data.step,
+                action: data.action,
+                detail: data.detail,
+                filters: data.filters,
+              };
+              setMessages((prev) => {
+                const newMessages = [...prev];
+                const msg = newMessages[assistantMessageIndex];
+                newMessages[assistantMessageIndex] = {
+                  ...msg,
+                  progress: [...(msg.progress || []), step],
+                };
+                return newMessages;
+              });
+            } else if (data.type === "interpretation") {
               const interpretation = data.interpretation || "";
               if (interpretation) {
                 setMessages((prev) => {
@@ -188,7 +233,7 @@ export function ChatInterface() {
   }
 
   const sampleQuestions = [
-    { text: "What did I.F. Stone write about the Gulf of Tonkin Incident?" },
+    { text: "How did I.F. Stone's view of the Vietnam War evolve from 1954 to 1968?" },
     { text: "What did I.F. Stone think about Eugene McCarthy vs. RFK in the 1968 primary?" },
   ];
 
@@ -229,6 +274,43 @@ export function ChatInterface() {
                   </div>
                 ) : (
                   <div>
+                    {message.progress && message.progress.length > 0 && (
+                      message.content ? (
+                        // Research done: collapse to an expandable summary line.
+                        <details className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+                          <summary className="cursor-pointer hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                            Researched · {(() => {
+                              const searches = message.progress.filter((p) => p.action === "search").length;
+                              const reads = message.progress.filter((p) => p.action === "read").length;
+                              const parts = [`${searches} ${searches === 1 ? "search" : "searches"}`];
+                              if (reads > 0) parts.push(`${reads} ${reads === 1 ? "article" : "articles"} read`);
+                              return parts.join(", ");
+                            })()}
+                          </summary>
+                          <ol className="mt-1.5 ml-4 space-y-1 list-decimal">
+                            {message.progress.map((p, i) => (
+                              <li key={i}>{progressLabel(p)}</li>
+                            ))}
+                          </ol>
+                        </details>
+                      ) : (
+                        // Research in flight: show the steps live.
+                        <div className="mb-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+                          {message.progress.map((p, i) => (
+                            <div key={i} className="flex items-center gap-1.5">
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                  i === message.progress!.length - 1
+                                    ? "bg-amber-500 animate-pulse"
+                                    : "bg-amber-300 dark:bg-amber-700"
+                                }`}
+                              />
+                              <span>{progressLabel(p)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    )}
                     {message.interpretation && (
                       <div className="mb-2 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
                         <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
