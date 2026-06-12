@@ -1,12 +1,64 @@
 import { NextRequest } from 'next/server';
 import { createEmbedding, generateAnswerStream } from '@/lib/openai';
-import { searchArticles } from '@/lib/search';
+import { searchArticles, type Match } from '@/lib/search';
 import { parseQuery, type ParsedQuery } from '@/lib/self-query';
+import { runResearchAgent, dedupeMatches } from '@/lib/agent';
 import type { SearchFilters } from '@/lib/filters';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+}
+
+const MAX_SOURCES = 10;
+const PREVIEW_LEN = 280;
+const NO_RESULTS_MESSAGE =
+  "I couldn't find any relevant information in I.F. Stone's Weekly to answer your question. Please try rephrasing or asking about a different topic.";
+
+// Build the [Source n] context block the answer model is grounded in.
+function buildContext(matches: Match[]): string {
+  return matches
+    .map((match, idx) => {
+      const metadata = match.metadata as Record<string, any>;
+      const text = metadata.full_text || metadata.text;
+      const header = [
+        metadata.title,
+        metadata.date,
+        metadata.author,
+      ].filter(Boolean).join(' | ');
+      return `[Source ${idx + 1}] ${header}\n${text}`;
+    })
+    .join('\n\n');
+}
+
+function buildSources(matches: Match[]) {
+  return matches.map((match) => {
+    const metadata = match.metadata as Record<string, any>;
+    const fileId = metadata.file_id || metadata.filename;
+    const pdfUrl = `https://www.ifstone.org/weekly/${fileId}`;
+
+    // Ship only a short preview; the full text is fetched on demand via
+    // /api/article/[id] when the reader is opened (keeps this payload small).
+    const fullText = metadata.full_text || metadata.text || '';
+    const preview =
+      fullText.length > PREVIEW_LEN
+        ? fullText.slice(0, PREVIEW_LEN).trimEnd() + '…'
+        : fullText;
+
+    return {
+      id: metadata.article_id,
+      title: metadata.title || metadata.article_title || fileId,
+      text: preview,
+      date: metadata.date,
+      year: metadata.year,
+      author: metadata.author,
+      type: metadata.type,
+      pages: metadata.pages,
+      filename: fileId,
+      pdfUrl: pdfUrl,
+      score: match.score,
+    };
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -24,132 +76,90 @@ export async function POST(request: NextRequest) {
     }
 
     const uiFilters = (filters || {}) as SearchFilters;
+    const hasQuestion =
+      Boolean(question) && typeof question === 'string' && Boolean(question.trim());
+    const history = conversationHistory as Message[];
 
-    // Self-query: infer filters + a cleaner semantic query from the question.
-    // parseQuery never throws — on any failure it returns the question unchanged
-    // with no filters, i.e. plain hybrid search. Skip it for filter-only requests.
-    let parsed: ParsedQuery = { semanticQuery: '', filters: {}, interpretation: '' };
-    if (question && typeof question === 'string' && question.trim()) {
-      parsed = await parseQuery(question);
-    }
-
-    // Explicit UI filters always win over inferred ones.
-    const merged: SearchFilters = { ...parsed.filters, ...uiFilters };
-
-    // Retrieve on the semantic part; fall back to the raw question, then a broad query.
-    const queryText =
-      parsed.semanticQuery?.trim() || question?.trim() || 'I.F. Stone Weekly 1953';
-    const questionEmbedding = await createEmbedding(queryText);
-
-    // Hybrid search (semantic + lexical) over the Postgres serving layer
-    const matches = await searchArticles(queryText, questionEmbedding, 10, merged);
-
-    if (matches.length === 0) {
-      const encoder = new TextEncoder();
-      const noResultsMessage = {
-        type: 'content',
-        content:
-          "I couldn't find any relevant information in I.F. Stone's Weekly to answer your question. Please try rephrasing or asking about a different topic.",
-      };
-      return new Response(encoder.encode(JSON.stringify(noResultsMessage)), {
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Extract context and sources
-    const context = matches
-      .map((match, idx) => {
-        const metadata = match.metadata as Record<string, any>;
-        const text = metadata.full_text || metadata.text;
-        const header = [
-          metadata.title,
-          metadata.date,
-          metadata.author,
-        ].filter(Boolean).join(' | ');
-        return `[Source ${idx + 1}] ${header}\n${text}`;
-      })
-      .join('\n\n');
-
-    const PREVIEW_LEN = 280;
-    const sources = matches.map((match) => {
-      const metadata = match.metadata as Record<string, any>;
-      const fileId = metadata.file_id || metadata.filename;
-      const pdfUrl = `https://www.ifstone.org/weekly/${fileId}`;
-
-      // Ship only a short preview; the full text is fetched on demand via
-      // /api/article/[id] when the reader is opened (keeps this payload small).
-      const fullText = metadata.full_text || metadata.text || '';
-      const preview =
-        fullText.length > PREVIEW_LEN
-          ? fullText.slice(0, PREVIEW_LEN).trimEnd() + '…'
-          : fullText;
-
-      return {
-        id: metadata.article_id,
-        title: metadata.title || metadata.article_title || fileId,
-        text: preview,
-        date: metadata.date,
-        year: metadata.year,
-        author: metadata.author,
-        type: metadata.type,
-        pages: metadata.pages,
-        filename: fileId,
-        pdfUrl: pdfUrl,
-        score: match.score,
-      };
-    });
-
-    // Create a streaming response
+    // The stream opens before any retrieval so the agent's progress events
+    // reach the client live. Order: progress* → (interpretation) → sources →
+    // content* → done.
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        // How the query was read (inferred filters), so the UI can surface it.
-        controller.enqueue(
-          encoder.encode(
-            JSON.stringify({
-              type: 'interpretation',
-              interpretation: parsed.interpretation,
-              filters: merged,
-            }) + '\n'
-          )
-        );
-
-        // Send sources next
-        controller.enqueue(
-          encoder.encode(JSON.stringify({ type: 'sources', sources }) + '\n')
-        );
+        const send = (event: Record<string, unknown>) =>
+          controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
 
         try {
+          // Agentic research path: a tool-calling planner issues its own scoped
+          // searches and article reads. Retrieval only — the answer below is
+          // still written by generateAnswerStream. Filter-only requests skip it;
+          // any agent failure falls back to the original one-shot flow.
+          let matches: Match[] | null = null;
+          if (hasQuestion) {
+            try {
+              const collected = await runResearchAgent({
+                question,
+                conversationHistory: history,
+                uiFilters,
+                onProgress: (p) => send({ type: 'progress', ...p }),
+              });
+              matches = dedupeMatches(collected, MAX_SOURCES);
+            } catch (err) {
+              console.error('agent loop failed; falling back to one-shot search:', err);
+            }
+          }
+
+          if (matches === null) {
+            // Original flow: self-query parse → single hybrid search. parseQuery
+            // never throws — on any failure it returns the question unchanged
+            // with no filters, i.e. plain hybrid search.
+            let parsed: ParsedQuery = { semanticQuery: '', filters: {}, interpretation: '' };
+            if (hasQuestion) {
+              parsed = await parseQuery(question);
+            }
+
+            // Explicit UI filters always win over inferred ones.
+            const merged: SearchFilters = { ...parsed.filters, ...uiFilters };
+
+            // Retrieve on the semantic part; fall back to the raw question, then a broad query.
+            const queryText =
+              parsed.semanticQuery?.trim() || question?.trim() || 'I.F. Stone Weekly 1953';
+            const questionEmbedding = await createEmbedding(queryText);
+
+            matches = await searchArticles(queryText, questionEmbedding, MAX_SOURCES, merged);
+
+            // How the query was read (inferred filters), so the UI can surface it.
+            send({ type: 'interpretation', interpretation: parsed.interpretation, filters: merged });
+          }
+
+          if (matches.length === 0) {
+            send({ type: 'content', content: NO_RESULTS_MESSAGE });
+            send({ type: 'done' });
+            return;
+          }
+
+          // Send sources before the answer starts streaming
+          send({ type: 'sources', sources: buildSources(matches) });
+
           // Stream the answer
           const chatStream = await generateAnswerStream(
             question,
-            context,
-            conversationHistory as Message[]
+            buildContext(matches),
+            history
           );
 
           for await (const chunk of chatStream) {
             const content = chunk.choices[0]?.delta?.content || '';
             if (content) {
-              controller.enqueue(
-                encoder.encode(JSON.stringify({ type: 'content', content }) + '\n')
-              );
+              send({ type: 'content', content });
             }
           }
 
           // Send done signal
-          controller.enqueue(
-            encoder.encode(JSON.stringify({ type: 'done' }) + '\n')
-          );
+          send({ type: 'done' });
         } catch (error) {
           console.error('Error streaming answer:', error);
-          controller.enqueue(
-            encoder.encode(
-              JSON.stringify({
-                type: 'error',
-                error: 'Error generating answer',
-              }) + '\n'
-            )
-          );
+          send({ type: 'error', error: 'Error generating answer' });
         } finally {
           controller.close();
         }

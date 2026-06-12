@@ -6,7 +6,7 @@ export { type SearchFilters } from './filters';
 const RRF_K = 60;        // RRF constant; damps the tail
 const CANDIDATES = 50;   // per-ranker pool feeding the fusion
 
-interface Match {
+export interface Match {
   metadata: Record<string, any>;
   score: number;
 }
