@@ -46,10 +46,12 @@ function AboutModal({ onClose }: { onClose: () => void }) {
           <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
             <p>
               This app lets you explore I.F. Stone&apos;s Weekly using natural
-              language. It combines{' '}
+              language. An AI{' '}
+              <span className="text-amber-600 dark:text-amber-400">research agent</span>{' '}
+              plans how to search the archive for your question, combining{' '}
               <span className="text-amber-600 dark:text-amber-400">semantic search</span>{' '}
-              (matching by meaning) with keyword search, and reads your question
-              for filters &mdash; author, dates, document type &mdash; automatically.
+              (matching by meaning) with keyword search, then a second model
+              writes an answer grounded in everything it found.
             </p>
 
             <div className="space-y-3">
@@ -58,12 +60,13 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                   1
                 </span>
                 <p>
-                  Your question is first read for{' '}
-                  <span className="text-amber-600 dark:text-amber-400">filters</span>.
-                  Phrases like &ldquo;before the LBJ administration&rdquo; become a
-                  date cutoff (issues before Nov 1963), and &ldquo;what did Stone
-                  think&rdquo; narrows to his own articles. When filters are applied,
-                  a one-line note above the answer shows how your question was read.
+                  The research agent reads your question and plans its searches.
+                  A broad question like &ldquo;how did Stone&apos;s view of
+                  Vietnam evolve?&rdquo; becomes several scoped searches &mdash;
+                  early and late periods separately &mdash; and phrases like
+                  &ldquo;what did Stone think&rdquo; become{' '}
+                  <span className="text-amber-600 dark:text-amber-400">filters</span>{' '}
+                  (author, dates, document type) on each search.
                 </p>
               </div>
               <div className="flex gap-3">
@@ -71,8 +74,9 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                   2
                 </span>
                 <p>
-                  The topical part of your question is converted into a vector
-                  embedding that captures its meaning.
+                  Each search converts its query into a vector embedding that
+                  captures its meaning, combined with a keyword search across
+                  the article archive to find the most relevant articles.
                 </p>
               </div>
               <div className="flex gap-3">
@@ -80,9 +84,12 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                   3
                 </span>
                 <p>
-                  That embedding is combined with a keyword search across the
-                  article archive &mdash; with any inferred filters applied &mdash;
-                  to find the most relevant passages.
+                  The agent reviews what came back: it can search again with
+                  different phrasing, or open the full text of a promising
+                  article for more detail. Each step appears live above the
+                  answer and collapses into an expandable{' '}
+                  <span className="text-amber-600 dark:text-amber-400">research trace</span>{' '}
+                  when the answer arrives.
                 </p>
               </div>
               <div className="flex gap-3">
@@ -90,13 +97,13 @@ function AboutModal({ onClose }: { onClose: () => void }) {
                   4
                 </span>
                 <p>
-                  The top 10 matching articles are listed as{' '}
-                  <span className="text-amber-600 dark:text-amber-400">Sources</span>,
-                  ranked by relevance score. All 10 are passed as context to an
-                  AI model, which synthesizes a narrative answer with inline
-                  citations. The answer may emphasize only a few of the sources —
-                  the full list lets you verify and explore what else the search
-                  found.
+                  Everything the agent retrieved is de-duplicated and ranked,
+                  and the top 10 articles are listed as{' '}
+                  <span className="text-amber-600 dark:text-amber-400">Sources</span>.
+                  All 10 are passed as context to an AI model, which synthesizes
+                  a narrative answer with inline citations. The answer may
+                  emphasize only a few of the sources — the full list lets you
+                  verify and explore what else the search found.
                 </p>
               </div>
             </div>
