@@ -2,6 +2,15 @@
 
 An AI-powered semantic search interface for I.F. Stone's Weekly archive (1953-1971). Ask questions about I.F. Stone's investigative journalism and get AI-generated answers with citations and links to the original PDFs.
 
+A sample issue — June 24, 1957 (Vol. V No. 25). Click any page to open the original PDF on [ifstone.org](https://www.ifstone.org).
+
+<p>
+  <a href="https://www.ifstone.org/weekly/IFStonesWeekly-1957jun24.pdf"><img src="docs/images/1957jun24-1.jpg" alt="I.F. Stone's Weekly, Vol. V No. 25, page 1" width="180"></a>
+  <a href="https://www.ifstone.org/weekly/IFStonesWeekly-1957jun24.pdf"><img src="docs/images/1957jun24-2.jpg" alt="I.F. Stone's Weekly, Vol. V No. 25, page 2" width="180"></a>
+  <a href="https://www.ifstone.org/weekly/IFStonesWeekly-1957jun24.pdf"><img src="docs/images/1957jun24-3.jpg" alt="I.F. Stone's Weekly, Vol. V No. 25, page 3" width="180"></a>
+  <a href="https://www.ifstone.org/weekly/IFStonesWeekly-1957jun24.pdf"><img src="docs/images/1957jun24-4.jpg" alt="I.F. Stone's Weekly, Vol. V No. 25, page 4" width="180"></a>
+</p>
+
 ## Overview
 
 This application uses:
