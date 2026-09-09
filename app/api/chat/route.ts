@@ -14,6 +14,19 @@ const MAX_SOURCES = 10;
 const PREVIEW_LEN = 280;
 const NO_RESULTS_MESSAGE =
   "I couldn't find any relevant information in I.F. Stone's Weekly to answer your question. Please try rephrasing or asking about a different topic.";
+const QUOTA_MESSAGE =
+  'The search service is temporarily unavailable: the OpenAI API quota for this site has been exhausted. Please try again later.';
+const GENERIC_ERROR_MESSAGE = 'Error generating answer';
+
+// Every stage (agent, self-query, embedding, answer) needs OpenAI, so an
+// exhausted quota fails the whole request; tell the user why rather than
+// leaving an empty answer bubble.
+function userFacingError(error: unknown): string {
+  const err = error as { type?: string; code?: string } | null;
+  const quota =
+    err?.type === 'insufficient_quota' || err?.code === 'insufficient_quota';
+  return quota ? QUOTA_MESSAGE : GENERIC_ERROR_MESSAGE;
+}
 
 // Build the [Source n] context block the answer model is grounded in.
 function buildContext(matches: Match[]): string {
@@ -159,7 +172,7 @@ export async function POST(request: NextRequest) {
           send({ type: 'done' });
         } catch (error) {
           console.error('Error streaming answer:', error);
-          send({ type: 'error', error: 'Error generating answer' });
+          send({ type: 'error', error: userFacingError(error) });
         } finally {
           controller.close();
         }

@@ -79,6 +79,8 @@ export interface Message {
   }>;
 }
 
+const GENERIC_ERROR = "Sorry, I encountered an error. Please try again.";
+
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -112,6 +114,7 @@ export function ChatInterface() {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
+    let assistantMessageIndex = -1;
 
     try {
       const conversationHistory = messages.map((msg) => ({
@@ -126,16 +129,15 @@ export function ChatInterface() {
         body: JSON.stringify({ question, conversationHistory }),
       });
 
-      if (!response.ok) throw new Error("Failed to get response");
+      if (!response.ok) throw new Error(GENERIC_ERROR);
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
 
-      if (!reader) throw new Error("No response body");
+      if (!reader) throw new Error(GENERIC_ERROR);
 
       let sources: Message["sources"] = [];
       let content = "";
-      let assistantMessageIndex = -1;
 
       setMessages((prev) => {
         assistantMessageIndex = prev.length;
@@ -153,55 +155,61 @@ export function ChatInterface() {
 
         for (const line of lines) {
           if (!line.trim()) continue;
+          let data;
           try {
-            const data = JSON.parse(line);
+            data = JSON.parse(line);
+          } catch {
+            // Incomplete JSON line — will be completed in next chunk
+            buffer = line;
+            continue;
+          }
 
-            if (data.type === "progress") {
-              const step: ProgressStep = {
-                step: data.step,
-                action: data.action,
-                detail: data.detail,
-                filters: data.filters,
+          if (data.type === "error") {
+            // Server-reported failure (e.g. OpenAI quota exhausted); surface
+            // its message instead of leaving an empty answer bubble.
+            throw new Error(data.error || GENERIC_ERROR);
+          }
+
+          if (data.type === "progress") {
+            const step: ProgressStep = {
+              step: data.step,
+              action: data.action,
+              detail: data.detail,
+              filters: data.filters,
+            };
+            setMessages((prev) => {
+              const newMessages = [...prev];
+              const msg = newMessages[assistantMessageIndex];
+              newMessages[assistantMessageIndex] = {
+                ...msg,
+                progress: [...(msg.progress || []), step],
               };
-              setMessages((prev) => {
-                const newMessages = [...prev];
-                const msg = newMessages[assistantMessageIndex];
-                newMessages[assistantMessageIndex] = {
-                  ...msg,
-                  progress: [...(msg.progress || []), step],
-                };
-                return newMessages;
-              });
-            } else if (data.type === "interpretation") {
-              const interpretation = data.interpretation || "";
-              if (interpretation) {
-                setMessages((prev) => {
-                  const newMessages = [...prev];
-                  newMessages[assistantMessageIndex] = {
-                    ...newMessages[assistantMessageIndex],
-                    interpretation,
-                  };
-                  return newMessages;
-                });
-              }
-            } else if (data.type === "sources") {
-              sources = data.sources;
-            } else if (data.type === "content") {
-              content += data.content;
+              return newMessages;
+            });
+          } else if (data.type === "interpretation") {
+            const interpretation = data.interpretation || "";
+            if (interpretation) {
               setMessages((prev) => {
                 const newMessages = [...prev];
                 newMessages[assistantMessageIndex] = {
                   ...newMessages[assistantMessageIndex],
-                  content,
+                  interpretation,
                 };
                 return newMessages;
               });
-            } else if (data.type === "error") {
-              throw new Error(data.error);
             }
-          } catch {
-            // Incomplete JSON line — will be completed in next chunk
-            buffer = line;
+          } else if (data.type === "sources") {
+            sources = data.sources;
+          } else if (data.type === "content") {
+            content += data.content;
+            setMessages((prev) => {
+              const newMessages = [...prev];
+              newMessages[assistantMessageIndex] = {
+                ...newMessages[assistantMessageIndex],
+                content,
+              };
+              return newMessages;
+            });
           }
         }
       }
@@ -221,13 +229,20 @@ export function ChatInterface() {
       setIsLoading(false);
     } catch (error) {
       console.error("Error:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Sorry, I encountered an error. Please try again.",
-        },
-      ]);
+      const content =
+        error instanceof Error && error.message ? error.message : GENERIC_ERROR;
+      setMessages((prev) => {
+        // Fill the pending assistant bubble if the stream had opened; otherwise
+        // (fetch itself failed) append a new one.
+        const newMessages = [...prev];
+        const msg = newMessages[assistantMessageIndex];
+        if (msg && msg.role === "assistant" && !msg.content) {
+          newMessages[assistantMessageIndex] = { ...msg, content };
+        } else {
+          newMessages.push({ role: "assistant", content });
+        }
+        return newMessages;
+      });
       setIsLoading(false);
     }
   }
