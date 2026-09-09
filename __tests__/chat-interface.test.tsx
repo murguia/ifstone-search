@@ -61,4 +61,24 @@ describe('ChatInterface sample questions', () => {
       expect(screen.getByText('Stone wrote about the incident.')).toBeTruthy()
     );
   });
+
+  it('shows the server error message when the stream reports an error', async () => {
+    const message =
+      'The search service is temporarily unavailable: the OpenAI API quota for this site has been exhausted. Please try again later.';
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      streamResponse([JSON.stringify({ type: 'error', error: message })])
+    );
+
+    render(<ChatInterface />);
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /How did I\.F\. Stone's view of the Vietnam War evolve from 1954 to 1968\?/i,
+      })
+    );
+
+    // The pending assistant bubble is filled with the server's message rather
+    // than left empty.
+    await waitFor(() => expect(screen.getByText(message)).toBeTruthy());
+    expect(screen.queryByText(/Sorry, I encountered an error/)).toBeNull();
+  });
 });
