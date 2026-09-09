@@ -169,6 +169,10 @@ Required variables (in `.env.local`):
 - `OPENAI_API_KEY` - For embeddings and LLM responses
 - `DATABASE_URL` - Postgres + pgvector serving layer (local: `postgresql://localhost/ifstone`; production: Supabase connection string)
 
+Optional:
+- `AGENT_MODEL` - Research-planner model in `lib/agent.ts` (default `gpt-4o`); e.g. `gpt-4o-mini` to cut cost
+- `OPENAI_BASE_URL` - Read by the OpenAI SDK itself; point it at an OpenAI-compatible host (e.g. Vercel AI Gateway) to route all calls elsewhere
+
 ### Deployment
 
 Deployed on Vercel. Environment variables must be set in Vercel dashboard. The `next.config.js` includes `Cache-Control: no-cache` headers to prevent Safari from serving stale content after deploys.

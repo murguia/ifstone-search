@@ -6,7 +6,8 @@ import type { Match } from './search';
 import type { SearchFilters } from './filters';
 
 const MAX_STEPS = 4;
-const AGENT_MODEL = 'gpt-4o';
+// Planner model; overridable per deployment (e.g. to try gpt-4o-mini) without a redeploy.
+const AGENT_MODEL = process.env.AGENT_MODEL || 'gpt-4o';
 
 export interface AgentProgress extends ToolProgress {
   step: number;

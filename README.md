@@ -53,6 +53,8 @@ OPENAI_API_KEY=your_openai_api_key_here
 DATABASE_URL=your_postgres_connection_string_here
 ```
 
+Optional: `AGENT_MODEL` overrides the research-planner model (default `gpt-4o`).
+
 ### 3. Run the Development Server
 
 ```bash
